@@ -536,6 +536,18 @@ main > * { flex-shrink: 0; }
 .stock-n small { font-size: 15px; color: var(--text-3); font-weight: 500; letter-spacing: 0; }
 .stock-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .stock-quick .opt { font-family: var(--mono); }
+
+/* inventory v8: own data, drawn category art */
+.inv-search { display: flex; gap: 8px; flex-direction: row-reverse; }
+.inv-search .search { flex: 1; min-width: 0; }
+.add-part { flex: none; width: 48px; height: 48px; background: var(--gold) !important; color: var(--gold-ink) !important; border: none !important; }
+.pimg, .part-hero { background: var(--bg-2); }
+.pimg img.photo, .part-hero img.photo { object-fit: cover; mix-blend-mode: normal; padding: 0; }
+.art { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--tint); background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tint) 16%, transparent), transparent 70%); }
+.art svg { width: 38%; max-width: 72px; height: auto; }
+.art small { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.photo-pick { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px 8px 8px; border-radius: 12px; border: 1px dashed var(--line-2); color: var(--text-2); font-size: 14px; cursor: pointer; }
+.photo-pick .thumb { width: 44px; height: 44px; border-radius: 8px; background: var(--bg-2) center/cover; display: flex; align-items: center; justify-content: center; color: var(--text-3); }
 </style>
 </head>
 <body>
@@ -575,7 +587,6 @@ main > * { flex-shrink: 0; }
 </div>
 
 <script src="vendor/awty-libs.js"></script>
-<script src="vendor/inventory-data.js"></script>
 <script>
 /* ---------------- icons ---------------- */
 const ICONS = {
@@ -1461,7 +1472,7 @@ document.addEventListener('click', (e) => {
   const d = { ...el.dataset };
   switch (d.action) {
     case 'fset': state.form[d.key] = d.val; rr(); break;
-    case 'fstep': state.form[d.key] = Math.max(1, (+state.form[d.key] || 1) + +d.d); rr(); break;
+    case 'fstep': state.form[d.key] = Math.max(0, (+state.form[d.key] || 0) + +d.d); rr(); break;
     case 'cal-toggle': state.calOpen = !state.calOpen; if (state.calOpen) { const x = dateOf(state.form.due); state.calMonth = [x.getFullYear(), x.getMonth()]; } rr(); break;
     case 'cal-nav': { const [y, m] = state.calMonth, x = new Date(y, m + +d.d, 1); state.calMonth = [x.getFullYear(), x.getMonth()]; rr(); break; }
     case 'cal-pick': state.form.due = d.val; state.calOpen = false; rr(); break;
@@ -1800,14 +1811,79 @@ sheetHTML = function () {
 };
 
 /* ---- inventory: the real 93 parts from the inventory app ---- */
-const INV_IMG = 'https://jasper23343-tech.github.io/frc-inventory/';
-const AREAS = window.AREAS || [], CATS = window.CATEGORIES || [], PARTS = (window.SEED_PARTS || []).map(p => ({ ...p }));
+/* inventory: its own sample data (not the old inventory app). Places include "On a robot". */
+const AREAS = [
+  { id: 'cabinet', name: 'Parts cabinet', color: '#5B8DEF' },
+  { id: 'hardware', name: 'Hardware drawers', color: '#E8B53A' },
+  { id: 'elec', name: 'Electrical bins', color: '#F2C94C' },
+  { id: 'chest', name: 'Tool chest', color: '#F28B50' },
+  { id: 'peg', name: 'Pegboard', color: '#B58CFF' },
+  { id: 'robot', name: 'On a robot', color: '#2FB36D' }
+];
+const CATS = [{ name: 'Hardware' }, { name: 'Mechanical' }, { name: 'Electrical' }, { name: 'Tools' }, { name: 'Supplies' }];
+const CAT_SUBS = { Hardware: ['Bolts', 'Nuts', 'Washers', 'Rivets'], Mechanical: ['Bearings', 'Gears & pulleys', 'Belts & chain', 'Shafts & spacers', 'Wheels', 'Structure'], Electrical: ['Motors', 'Controllers', 'Wire', 'Connectors', 'Breakers', 'Sensors', 'Batteries'], Tools: ['Hand tools', 'Power tools', 'Measuring', 'Crimpers'], Supplies: ['Tape', 'Zip ties', 'Adhesives', 'Safety'] };
+const P = (id, name, cat, sub, qty, unit, min, area, spot, conf = 'good') => ({ id, name, cat, sub, qty, unit, min, area, spot, conf });
+const PARTS = [
+  P('b1', '10-32 × 1/2" button head', 'Hardware', 'Bolts', 140, 'pcs', 100, 'hardware', 'Drawer 1'),
+  P('b2', '10-32 × 3/4" button head', 'Hardware', 'Bolts', 62, 'pcs', 100, 'hardware', 'Drawer 2'),
+  P('b3', '10-32 × 1" socket head', 'Hardware', 'Bolts', 85, 'pcs', 50, 'hardware', 'Drawer 3'),
+  P('b4', '10-32 × 2" socket head', 'Hardware', 'Bolts', 18, 'pcs', 25, 'hardware', 'Drawer 4', 'rough'),
+  P('b5', '1/4-20 × 1" hex bolt', 'Hardware', 'Bolts', 40, 'pcs', 20, 'hardware', 'Drawer 6'),
+  P('n1', '10-32 nylock nut', 'Hardware', 'Nuts', 210, 'pcs', 150, 'hardware', 'Drawer 8', 'rough'),
+  P('n2', '1/4-20 nylock nut', 'Hardware', 'Nuts', 36, 'pcs', 30, 'hardware', 'Drawer 9'),
+  P('w1', '#10 washer', 'Hardware', 'Washers', 300, 'pcs', 100, 'hardware', 'Drawer 10', 'rough'),
+  P('r1', '3/16" aluminum rivet', 'Hardware', 'Rivets', 75, 'pcs', 200, 'hardware', 'Drawer 12'),
+  P('m1', '1/2" hex bearing', 'Mechanical', 'Bearings', 22, 'pcs', 12, 'cabinet', 'Shelf 2 · blue bin'),
+  P('m2', '3/8" hex bearing', 'Mechanical', 'Bearings', 6, 'pcs', 10, 'cabinet', 'Shelf 2 · blue bin'),
+  P('m3', '1/2" hex shaft collar', 'Mechanical', 'Shafts & spacers', 30, 'pcs', 16, 'cabinet', 'Shelf 2 · grey bin'),
+  P('m4', '1/2" hex shaft, 36"', 'Mechanical', 'Shafts & spacers', 3, 'pcs', 2, 'cabinet', 'Bottom shelf'),
+  P('m5', 'Spacer kit, 1/2" hex', 'Mechanical', 'Shafts & spacers', 1, 'kit', 1, 'cabinet', 'Shelf 3'),
+  P('m6', '18T HTD pulley', 'Mechanical', 'Gears & pulleys', 8, 'pcs', 4, 'cabinet', 'Shelf 3 · drawer A'),
+  P('m7', '60T spur gear, 20 DP', 'Mechanical', 'Gears & pulleys', 2, 'pcs', 4, 'cabinet', 'Shelf 3 · drawer A'),
+  P('m8', 'HTD belt, 9 mm × 150T', 'Mechanical', 'Belts & chain', 5, 'pcs', 4, 'cabinet', 'Shelf 3 · hooks'),
+  P('m9', '#25 chain, 10 ft', 'Mechanical', 'Belts & chain', 1, 'roll', 1, 'cabinet', 'Shelf 3 · hooks'),
+  P('m10', '4" compliant wheel', 'Mechanical', 'Wheels', 10, 'pcs', 6, 'cabinet', 'Top shelf'),
+  P('m11', 'Swerve module, MK4i', 'Mechanical', 'Wheels', 4, 'pcs', 4, 'robot', 'Comp bot drivetrain'),
+  P('m12', 'Swerve module, spare', 'Mechanical', 'Wheels', 1, 'pcs', 2, 'cabinet', 'Top shelf'),
+  P('m13', '2×1 aluminum tube, 48"', 'Mechanical', 'Structure', 6, 'pcs', 4, 'cabinet', 'Stock rack'),
+  P('m14', 'Gusset plate, 90°', 'Mechanical', 'Structure', 14, 'pcs', 8, 'cabinet', 'Shelf 4'),
+  P('e1', 'Kraken X60', 'Electrical', 'Motors', 2, 'pcs', 2, 'elec', 'Motor shelf'),
+  P('e2', 'Kraken X60', 'Electrical', 'Motors', 8, 'pcs', 0, 'robot', 'Comp bot · swerve + intake'),
+  P('e3', 'NEO 550', 'Electrical', 'Motors', 3, 'pcs', 2, 'elec', 'Motor shelf'),
+  P('e4', 'SPARK MAX', 'Electrical', 'Controllers', 2, 'pcs', 2, 'elec', 'Bin E3'),
+  P('e5', '12 AWG wire, red/black', 'Electrical', 'Wire', 40, 'ft', 25, 'elec', 'Spool rack'),
+  P('e6', '18 AWG wire, CAN pair', 'Electrical', 'Wire', 12, 'ft', 25, 'elec', 'Spool rack'),
+  P('e7', 'Wago 221 lever connector', 'Electrical', 'Connectors', 48, 'pcs', 30, 'elec', 'Bin E1'),
+  P('e8', 'Anderson PowerPole set', 'Electrical', 'Connectors', 9, 'pcs', 20, 'elec', 'Bin E1'),
+  P('e9', '40 A breaker', 'Electrical', 'Breakers', 6, 'pcs', 4, 'elec', 'Bin E2'),
+  P('e10', 'CANcoder', 'Electrical', 'Sensors', 1, 'pcs', 2, 'elec', 'Bin E4'),
+  P('e11', 'Limelight 3', 'Electrical', 'Sensors', 1, 'pcs', 1, 'robot', 'Comp bot · shooter'),
+  P('e12', 'Robot battery, 18 Ah', 'Electrical', 'Batteries', 9, 'pcs', 8, 'elec', 'Battery cart'),
+  P('t1', 'Hex key set, SAE', 'Tools', 'Hand tools', 4, 'sets', 3, 'peg', 'Left side'),
+  P('t2', 'Flush cutters', 'Tools', 'Hand tools', 3, 'pcs', 3, 'peg', 'Middle'),
+  P('t3', 'Combination wrench set', 'Tools', 'Hand tools', 1, 'set', 1, 'chest', 'Drawer 2'),
+  P('t4', 'Cordless drill', 'Tools', 'Power tools', 2, 'pcs', 2, 'peg', 'Charging shelf'),
+  P('t5', 'Digital calipers', 'Tools', 'Measuring', 1, 'pcs', 2, 'chest', 'Top tray'),
+  P('t6', 'Ratcheting crimper', 'Tools', 'Crimpers', 2, 'pcs', 1, 'chest', 'Drawer 4'),
+  P('s1', 'Electrical tape', 'Supplies', 'Tape', 5, 'rolls', 4, 'chest', 'Drawer 5'),
+  P('s2', 'Zip ties, 8"', 'Supplies', 'Zip ties', 180, 'pcs', 200, 'elec', 'Bin E5', 'rough'),
+  P('s3', 'Blue Loctite 242', 'Supplies', 'Adhesives', 1, 'bottle', 2, 'chest', 'Drawer 5'),
+  P('s4', 'Safety glasses', 'Supplies', 'Safety', 14, 'pcs', 12, 'peg', 'Door hook')
+];
+const CAT_ART = {
+  Hardware: '<path d="M9 3h6v4H9zM10.5 7v12.5l1.5 1.5 1.5-1.5V7M10.5 10h3M10.5 13h3M10.5 16h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  Mechanical: '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/>',
+  Electrical: '<path d="M13 3 5 13h6l-1 8 8-10h-6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  Tools: '<path d="M14.5 4.5a4 4 0 0 0-4.8 5.3L4 15.5 6.5 18l5.7-5.7a4 4 0 0 0 5.3-4.8l-2.4 2.4-2.1-.4-.4-2.1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  Supplies: '<circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M19.5 12H21" stroke="currentColor" stroke-width="1.5"/>'
+};
+const CAT_TINT = { Hardware: '#E8B53A', Mechanical: '#5FD69B', Electrical: '#F2C94C', Tools: '#F28B50', Supplies: '#B58CFF' };
 const areaById = (id) => AREAS.find(a => a.id === id) || { name: id, color: '#888' };
 const partById = (id) => PARTS.find(p => p.id === id);
 const isLow = (p) => p.qty < p.min;
 const escA = (s) => esc(String(s)).replace(/"/g, '&quot;');
 state.inv = { cat: 'All', area: null, q: '', low: false };
-const partImg = (p, cls = '') => p.cover ? `<img class="${cls}" src="${INV_IMG}img/cover/${p.cover}.jpg" alt="" loading="lazy" decoding="async">` : `<span class="noimg">${icon('shop', 28)}</span>`;
+const partImg = (p) => p.pic ? `<img src="${p.pic}" alt="" class="photo">` : `<span class="art" style="--tint:${CAT_TINT[p.cat] || 'var(--gold)'}"><svg viewBox="0 0 24 24" aria-hidden="true">${CAT_ART[p.cat] || CAT_ART.Hardware}</svg><small>${p.sub}</small></span>`;
 function invList() {
   const s = state.inv, q = s.q.trim().toLowerCase();
   return PARTS.filter(p => (s.cat === 'All' || p.cat === s.cat) && (!s.area || p.area === s.area) && (!s.low || isLow(p))
@@ -1816,7 +1892,7 @@ function invList() {
 function inventoryHTML() {
   const s = state.inv, list = invList(), low = PARTS.filter(isLow);
   const cats = ['All', ...CATS.map(c => c.name)];
-  return `<div class="inv-search"><input class="search" type="search" data-invq value="${escA(s.q)}" placeholder="Search ${PARTS.length} parts" aria-label="Search parts" autocomplete="off"></div>
+  return `<div class="inv-search"><button type="button" class="iconbtn add-part" data-action="sheet" data-sheet="newpart" aria-label="Add a part">${icon('plus', 20)}</button><input class="search" type="search" data-invq value="${escA(s.q)}" placeholder="Search ${PARTS.length} parts" aria-label="Search parts" autocomplete="off"></div>
     ${low.length ? `<button type="button" class="inv-low${s.low ? ' on' : ''}" data-action="inv-low"><span class="il-n">${nf('inv-lown', low.length)}</span><span class="txt"><span class="ttl">parts running low</span><span class="mt">${s.low ? 'Showing only these · tap to show all' : 'Below the minimum count · tap to see them'}</span></span><span class="chev">${icon('chev', 16)}</span></button>` : ''}
     <div class="inv-areas" role="group" aria-label="Places">${AREAS.map(a => `<button type="button" class="area${s.area === a.id ? ' on' : ''}" data-action="inv-area" data-id="${a.id}" aria-pressed="${s.area === a.id}"><i style="background:${a.color}"></i><b>${a.name}</b><span>${PARTS.filter(p => p.area === a.id).length} parts</span></button>`).join('')}</div>
     <div class="toolbar" role="group" aria-label="Category">${cats.map(c => `<button type="button" class="fbtn${s.cat === c ? ' on' : ''}" data-action="inv-cat" data-c="${escA(c)}">${c}${c === 'All' ? '' : ` <span style="color:var(--text-3)">${PARTS.filter(p => p.cat === c).length}</span>`}</button>`).join('')}</div>
@@ -1834,7 +1910,7 @@ function partPage(p) {
       <div class="stock-ctl"><button type="button" data-action="part-qty" data-id="${p.id}" data-d="-1" aria-label="One less" ${p.qty <= 0 ? 'disabled' : ''}>−</button><span class="stock-n">${nf('pq-' + p.id, p.qty)}<small>${p.unit}</small></span><button type="button" data-action="part-qty" data-id="${p.id}" data-d="1" aria-label="One more">+</button></div>
       <div class="stock-quick">${[-10, -5, 5, 10].map(d => `<button type="button" class="opt" data-action="part-qty" data-id="${p.id}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('')}</div></section>
     <section class="group"><h2>How accurate is this count?</h2><div class="seg" role="group" aria-label="Count accuracy">${ACC.map(([v, l]) => `<button type="button" data-action="part-acc" data-id="${p.id}" data-v="${v}" aria-pressed="${(p.conf === 'good' && v === 'good') || p.conf === v}">${l}</button>`).join('')}</div>
-      <span class="mt" style="color:var(--text-3)">Counts started as estimates from the Nov 7 shop photos. Fix them when you use a part.</span></section>
+      <span class="mt" style="color:var(--text-3)">Fix the count whenever you take some or put some back.</span></section>
     ${low ? `<button type="button" class="btn btn-gold" data-action="part-request" data-id="${p.id}">Request more · order ${Math.max(p.min * 2 - p.qty, 1)}</button>` : `<button type="button" class="btn btn-outline" data-action="part-request" data-id="${p.id}">Request more</button>`}
   </main></div>`;
 }
@@ -1876,6 +1952,42 @@ document.addEventListener('click', (e) => {
       state.toast = `Order request for ${n} sent to mentors`; rr(); break;
     }
   }
+}, true);
+
+/* ===== v8: add a part ===== */
+function smallPhoto(file, cb) {
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => { const c = document.createElement('canvas'), w = 480, k = w / Math.max(img.width, img.height); c.width = img.width * k; c.height = img.height * k; c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); cb(c.toDataURL('image/jpeg', 0.82)); };
+  img.src = url;
+}
+const v7Sheet = sheetHTML;
+sheetHTML = function () {
+  if (state.sheet !== 'newpart') return v7Sheet();
+  if (state.formKind !== 'newpart') { state.formKind = 'newpart'; state.formErr = ''; state.form = { name: '', cat: state.inv.cat !== 'All' ? state.inv.cat : 'Hardware', sub: '', area: state.inv.area || 'cabinet', spot: '', qty: 1, min: 1, unit: 'pcs', pic: '' }; }
+  const f = state.form;
+  if (!CAT_SUBS[f.cat].includes(f.sub)) f.sub = CAT_SUBS[f.cat][0];
+  const body = textField('name', 'Part name', 'e.g. 10-32 × 1/2" button head') + (state.formErr ? `<span class="ferr">${state.formErr}</span>` : '')
+    + `<label class="photo-pick"><span class="thumb" style="${f.pic ? `background-image:url(${f.pic})` : ''}">${f.pic ? '' : icon('image', 20)}</span><span>${f.pic ? 'Change photo' : 'Add a photo (optional)'}</span><input type="file" accept="image/*" data-partpic hidden></label>`
+    + optGroup('Category', 'cat', CATS.map(c => [c.name, c.name]))
+    + optGroup('Type', 'sub', CAT_SUBS[f.cat].map(x => [x, x]))
+    + optGroup('Where it lives', 'area', AREAS.map(a => [a.id, a.name]))
+    + textField('spot', 'Exact spot', 'e.g. Drawer 3, Shelf 2 · blue bin')
+    + `<div class="field-row">${stepper('qty', 'How many', 0, 999)}${stepper('min', 'Warn below', 0, 999)}</div>`
+    + optGroup('Counted in', 'unit', [['pcs', 'pieces'], ['ft', 'feet'], ['sets', 'sets'], ['rolls', 'rolls'], ['kit', 'kits']]);
+  return `<div class="sheet-wrap"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Add a part"><div class="handle"></div><div class="sh"><h2>Add a part</h2><button type="button" class="link" data-action="close-sheet">Close</button></div><div class="sb">${body}</div><div class="sf"><button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="save-part">Add to inventory</button></div></div></div>`;
+};
+document.addEventListener('change', (e) => {
+  if (!e.target.matches('[data-partpic]') || !e.target.files[0]) return;
+  smallPhoto(e.target.files[0], (url) => { state.form.pic = url; rr(); });
+});
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action="save-part"]'); if (!el) return;
+  e.stopImmediatePropagation();
+  const f = state.form;
+  if (!f.name.trim()) { state.formErr = 'Name the part.'; state.formErrKey = 'name'; rr(); return; }
+  PARTS.unshift({ id: 'u' + Date.now(), name: f.name.trim(), cat: f.cat, sub: f.sub, qty: +f.qty, unit: f.unit, min: +f.min, area: f.area, spot: f.spot.trim() || 'No spot yet', conf: 'perfect', pic: f.pic });
+  state.sheet = null; state.formKind = null; state.inv = { cat: 'All', area: null, q: '', low: false }; state.toast = 'Part added'; rr();
 }, true);
 
 render();
