@@ -405,6 +405,10 @@ html[data-vt="sheet-close"]::view-transition-old(screen), html[data-vt="sheet-cl
   @keyframes iosOutRight { to { transform: translateX(100%); } }
 }
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+
+/* No animations anywhere */
+*, *::before, *::after { animation: none !important; transition: none !important; }
+button:active { transform: none !important; }
 </style>
 </head>
 <body>
@@ -1115,7 +1119,7 @@ render = function (anim = '1') {
   else if (key !== lastKey && lastKey) kind = 'fade';
   lastDepth = depth; lastSheet = sheet; lastKey = key;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!kind || !document.startViewTransition || reduce) { v2Render('0'); return; }
+  if (true) { v2Render('0'); return; } // animations turned off
   const m = app.querySelector('main'), y = m ? m.scrollTop : 0;
   document.documentElement.dataset.vt = kind;
   const t = document.startViewTransition(() => {
