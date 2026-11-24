@@ -591,6 +591,15 @@ main > * { flex-shrink: 0; }
 .scan-frame { position: absolute; inset: 18%; border-radius: 18px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); border: 2px solid var(--gold); }
 .scan-msg { position: absolute; left: 16px; right: 16px; bottom: 16px; padding: 10px 12px; border-radius: 12px; background: rgba(10, 10, 10, 0.85); font-size: 13px; color: var(--text-2); text-align: center; }
 .a-btn .i { vertical-align: -3px; margin-right: 2px; }
+
+/* banner: drains, then closes; swipe up to dismiss */
+.dnotif { overflow: hidden; touch-action: none; }
+.dn-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--gold); transform-origin: left; animation: dnDrain 6s linear forwards; }
+.dnotif:hover .dn-bar, .dnotif.held .dn-bar { animation-play-state: paused; }
+@keyframes dnDrain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.dnotif.dragging { animation: none; transition: none; }
+.dnotif.leaving { transition: transform 220ms var(--ease-out), opacity 220ms ease; transform: translateY(-140%) !important; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .dn-bar { animation: dnDrain 6s linear forwards !important; } }
 </style>
 </head>
 <body>
@@ -1615,23 +1624,23 @@ const ANN_TAGS = { Everyone: 'var(--text-2)', Leadership: 'var(--gold)', Scoutin
 const EMOJI = ['❤️', '👍', '🔥', '🐐', '🍟', '🫡', '😂', '👀', '🎉', '💯', '🤖', '⚙️', '🏆', '😭', '🙏', '✅'];
 const ANN = [
   { id: 'a1', by: 'CL', when: 'Today at 3:12 PM', tags: ['Everyone'], unread: true,
-    text: '@everyone Kickoff watch party is Sat Jan 9 at 9 AM in the cafeteria. Breakfast is on the boosters. Bring a notebook, we start strategy right after the game reveal.\n\nParents are welcome. Sign-up for the breakfast crew is under Help out.',
+    text: 'Kickoff watch party is Sat Jan 9 at 9 AM in the cafeteria. Breakfast is on the boosters. Bring a notebook, we start strategy right after the game reveal.\n\nParents are welcome. Sign-up for the breakfast crew is under Help out.',
     reacts: [['❤️', 20, true], ['🐐', 5], ['🍟', 2], ['🫡', 1]],
     comments: [{ by: 'MC', when: 'Today at 3:20 PM', text: 'Can we bring the practice bot to show the new kids?', reacts: [['👍', 6]] }, { by: 'CL', when: 'Today at 3:24 PM', text: 'Yes, Leo is bringing it.', reacts: [['🔥', 3]] }, { by: 'NK', when: 'Today at 3:41 PM', text: 'is there going to be a stream setup or just the projector', reacts: [] }] },
   { id: 'a2', by: 'KT', when: 'Today at 1:05 PM', tags: ['Scouting'], unread: true,
-    text: '@Scouting New scouting app test this Saturday at 11. Bring your phone charged. We are running a fake match on the practice field and timing how fast everyone can enter data.',
+    text: 'New scouting app test this Saturday at 11. Bring your phone charged. We are running a fake match on the practice field and timing how fast everyone can enter data.',
     reacts: [['👀', 7], ['🤖', 3, true]], comments: [{ by: 'PS', when: 'Today at 1:30 PM', text: 'Does it work offline yet?', reacts: [] }, { by: 'KT', when: 'Today at 1:33 PM', text: 'That is the point of the test 😅', reacts: [['😂', 4]] }] },
   { id: 'a3', by: 'LP', when: 'Yesterday at 6:48 PM', tags: ['Mechanical', 'Build'], unread: false,
     text: 'Swerve module #3 is out for a bearing swap. Do not drive the practice bot until it is back in. Should be done Thursday.',
     reacts: [['🫡', 9], ['🙏', 2]], comments: [] },
   { id: 'a4', by: 'CL', when: 'Nov 20 at 9:15 PM', tags: ['Leadership'], unread: false,
-    text: '@Leadership Leads meeting moves to Mondays at 7 PM on Discord voice starting next week. Bring your subteam task list so we can plan the build season.',
+    text: 'Leads meeting moves to Mondays at 7 PM on Discord voice starting next week. Bring your subteam task list so we can plan the build season.',
     reacts: [['👍', 6]], comments: [{ by: 'ZM', when: 'Nov 20 at 9:30 PM', text: 'works for me', reacts: [] }] }
 ];
 const annById = (id) => ANN.find(a => a.id === id);
 const nameColor = (i) => { const m = byI[i]; return !m ? 'var(--text)' : m.team === 'Mentors' ? 'var(--gold)' : /lead/i.test(m.role) ? 'var(--green-hi, #5FD69B)' : 'var(--text)'; };
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-const fmtMsg = (s) => esc(s).replace(/@(everyone|here|[A-Z][a-z]+)/g, '<span class="mention">@$1</span>');
+const fmtMsg = (s) => esc(s);
 const snippet = (s, n = 110) => { const t = s.replace(/\n+/g, ' '); return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, '') + '…' : t; };
 function reactsHTML(list, key) {
   const open = state.picker === key;
@@ -1687,7 +1696,7 @@ state.bannerSeen = {};
 function bannerHTML() {
   const a = state.signedIn && state.role !== 'parent' && !state.sheet ? ANN.find(x => x.unread && !state.bannerSeen[x.id]) : null;
   if (!a) return '';
-  return `<div class="dnotif" id="dnotif-${a.id}" role="status"><button type="button" class="dn-open" data-action="ann-go" data-id="${a.id}">${avatar(a.by, 'lg')}<span class="dn-txt"><span class="dn-head"><b style="color:${nameColor(a.by)}">${byI[a.by].n}</b> <span>#announcements</span></span><span class="dn-body">${fmtMsg(snippet(a.text))}</span></span></button><button type="button" class="dn-x" data-action="ann-dismiss" data-id="${a.id}" aria-label="Dismiss">×</button></div>`;
+  return `<div class="dnotif" id="dnotif-${a.id}" role="status"><button type="button" class="dn-open" data-action="ann-go" data-id="${a.id}">${avatar(a.by, 'lg')}<span class="dn-txt"><span class="dn-head"><b style="color:${nameColor(a.by)}">${byI[a.by].n}</b> <span>${a.tags.join(' · ')}</span></span><span class="dn-body">${fmtMsg(snippet(a.text))}</span></span></button><button type="button" class="dn-x" data-action="ann-dismiss" data-id="${a.id}" aria-label="Dismiss">×</button><span class="dn-bar"></span></div>`;
 }
 const v5Morph = morphApp;
 morphApp = function (html) { v5Morph(html + bannerHTML()); };
@@ -1695,7 +1704,7 @@ const v2Notifs = notifsPage;
 notifsPage = function () {
   const html = v2Notifs();
   if (state.notifSeg !== 'needs') return html;
-  const items = ANN.filter(a => a.unread).map(a => `<button type="button" class="rowx dn-row" data-action="ann-go" data-id="${a.id}">${avatar(a.by, 'lg')}<span class="txt"><span class="dn-head"><b style="color:${nameColor(a.by)}">${byI[a.by].n}</b> <span>#announcements</span></span><span class="dn-body">${fmtMsg(snippet(a.text, 90))}</span><span class="mt" style="font-size:12px;color:var(--text-3)">${a.when}</span></span></button>`).join('');
+  const items = ANN.filter(a => a.unread).map(a => `<button type="button" class="rowx dn-row" data-action="ann-go" data-id="${a.id}">${avatar(a.by, 'lg')}<span class="txt"><span class="dn-head"><b style="color:${nameColor(a.by)}">${byI[a.by].n}</b> <span>${a.tags.join(' · ')}</span></span><span class="dn-body">${fmtMsg(snippet(a.text, 90))}</span><span class="mt" style="font-size:12px;color:var(--text-3)">${a.when}</span></span></button>`).join('');
   return html.replace('<div class="list">', `<div class="list">${items}`).replace(/Needs you · \d+/, `Needs you · ${NOTIFS.needs.length + ANN.filter(a => a.unread).length}`);
 };
 
@@ -1705,9 +1714,9 @@ sheetHTML = function () {
   if (state.sheet !== 'newpost') return v6Sheet();
   if (state.formKind !== 'newpost') { state.formKind = 'newpost'; state.formErr = ''; state.form = { text: '', tags: ['Everyone'] }; }
   const f = state.form;
-  const body = `<div class="field${state.formErr ? ' err' : ''}"><label for="ff-text">Message</label><textarea id="ff-text" data-f="text" rows="5" placeholder="Type @everyone or @Scouting to ping">${esc(f.text)}</textarea></div>${state.formErr ? `<span class="ferr">${state.formErr}</span>` : ''}
+  const body = `<div class="field${state.formErr ? ' err' : ''}"><label for="ff-text">Message</label><textarea id="ff-text" data-f="text" rows="5" placeholder="What does the team need to know?">${esc(f.text)}</textarea></div>${state.formErr ? `<span class="ferr">${state.formErr}</span>` : ''}
     <div class="fgroup"><span class="k">Tags</span><div class="chips">${Object.keys(ANN_TAGS).map(t => `<button type="button" class="opt" data-action="ftag" data-val="${t}" aria-pressed="${f.tags.includes(t)}"><i class="tdot" style="background:${ANN_TAGS[t]}"></i>${t}</button>`).join('')}</div></div>
-    <p class="count-line" style="margin:0">Everyone tagged gets a notification. It also posts to #announcements on Discord.</p>`;
+    <p class="count-line" style="margin:0">Everyone in the tagged groups gets a notification.</p>`;
   return `<div class="sheet-wrap"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
     <div class="sheet" role="dialog" aria-modal="true" aria-label="New announcement"><div class="handle"></div><div class="sh"><h2>New announcement</h2><button type="button" class="link" data-action="close-sheet">Close</button></div><div class="sb">${body}</div><div class="sf"><button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="post-ann">Post</button></div></div></div>`;
 };
@@ -2205,6 +2214,33 @@ document.addEventListener('click', (e) => {
     case 'checkin-manual': doCheckIn('manual'); break;
     case 'checkin-sim': doCheckIn('scan'); break;
   }
+}, true);
+
+/* ===== v10: banner auto-closes when its bar runs out; swipe up to dismiss ===== */
+function dismissBanner(el) {
+  const id = el.id.replace('dnotif-', '');
+  el.classList.add('leaving');
+  setTimeout(() => { state.bannerSeen[id] = true; rr(); }, 220);
+}
+document.addEventListener('animationend', (e) => { if (e.target.classList.contains('dn-bar')) dismissBanner(e.target.closest('.dnotif')); });
+let drag = null;
+document.addEventListener('pointerdown', (e) => { const el = e.target.closest('.dnotif'); if (!el) return; drag = { el, y: e.clientY, dy: 0 }; el.classList.add('held'); });
+document.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  drag.dy = e.clientY - drag.y;
+  if (Math.abs(drag.dy) > 4) drag.el.classList.add('dragging');
+  drag.el.style.transform = `translateY(${drag.dy < 0 ? drag.dy : drag.dy * 0.2}px)`;
+});
+document.addEventListener('pointerup', () => {
+  if (!drag) return;
+  const { el, dy } = drag; drag = null;
+  el.classList.remove('held', 'dragging');
+  if (dy < -30) { el.style.transform = ''; dismissBanner(el); }
+  else { el.style.transform = ''; if (Math.abs(dy) > 6) el.dataset.dragged = '1'; }
+});
+window.addEventListener('click', (e) => {
+  const el = e.target.closest('.dnotif'); if (!el || !el.dataset.dragged) return;
+  delete el.dataset.dragged; e.stopImmediatePropagation(); e.preventDefault();
 }, true);
 
 render();
