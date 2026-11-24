@@ -600,6 +600,25 @@ main > * { flex-shrink: 0; }
 .dnotif.dragging { animation: none; transition: none; }
 .dnotif.leaving { transition: transform 220ms var(--ease-out), opacity 220ms ease; transform: translateY(-140%) !important; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .dn-bar { animation: dnDrain 6s linear forwards !important; } }
+
+/* ===== v11: parent + mentor home ===== */
+.a-time small { font-size: 22px; letter-spacing: -0.02em; opacity: 0.55; }
+.a-stats .s { font-size: 13px; color: var(--text-3); font-weight: 500; }
+.a-stats .s.gold { color: var(--gold); }
+.a-wait { gap: 12px; padding: 10px 0; }
+.a-wait .t .x { font-family: inherit; font-size: 15px; line-height: 1.35; color: var(--text-2); }
+.a-wait .t .x b { font-size: inherit; font-weight: 500; color: var(--text); }
+.a-wait:hover .t .x b { color: var(--gold); }
+.a-new { margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(232,181,58,0.14); color: var(--gold); font-family: var(--mono); font-size: 11px; font-weight: 500; vertical-align: 3px; }
+.a-news { display: flex; flex-direction: column; margin-top: -10px; }
+.a-news-row { width: 100%; display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; background: none; border: none; border-bottom: 1px solid var(--line); color: inherit; text-align: left; font: inherit; }
+.a-news-row:last-child { border-bottom: none; }
+.a-news-row .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.a-news-row .h { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.a-news-row .h b { font-weight: 600; }
+.a-news-row .h span { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.a-news-row .u { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-left: auto; flex: none; }
+.a-news-row .b { font-size: 14px; line-height: 1.45; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -2241,6 +2260,92 @@ document.addEventListener('pointerup', () => {
 window.addEventListener('click', (e) => {
   const el = e.target.closest('.dnotif'); if (!el || !el.dataset.dragged) return;
   delete el.dataset.dragged; e.stopImmediatePropagation(); e.preventDefault();
+}, true);
+
+
+/* ===== v11: parent + mentor Home in direction A, parents see announcements ===== */
+ANN_TAGS.Parents = 'var(--green-hi)';
+ANN.splice(3, 0, { id: 'a5', by: 'CL', when: 'Nov 21 at 8:30 AM', tags: ['Parents'], unread: true,
+  text: 'Parents: travel permission forms for the district event are due Mar 1. You can sign them in the app under Me. Thanks for all the rides and snacks so far!',
+  reacts: [['🙏', 4, false], ['👍', 6, false]], comments: [] });
+const annVisible = (a) => state.role !== 'parent' || a.tags.includes('Everyone') || a.tags.includes('Parents');
+const annFeed = () => ANN.filter(annVisible);
+
+function annPreviewHTML(i) {
+  const list = annFeed().slice(0, 2);
+  const unread = annFeed().filter(a => a.unread).length;
+  const all = state.role === 'parent' ? 'data-action="push" data-page="news"' : `data-action="go" data-tab="${newsTab()}" data-sub="news"`;
+  return `<div class="group-head r" style="--i:${i}"><h2>Announcements${unread ? ` <span class="a-new">${unread} new</span>` : ''}</h2><button type="button" class="link" ${all}>View all</button></div>
+    <div class="a-news r" style="--i:${i + 1}">${list.map(a => `<button type="button" class="a-news-row" id="hn-${a.id}" data-action="ann-go" data-id="${a.id}">${avatar(a.by, 'lg')}<span class="t"><span class="h"><b style="color:${nameColor(a.by)}">${byI[a.by].n}</b><span>${a.when.replace(/ at .*/, '')}</span>${a.unread ? '<i class="u" aria-label="Unread"></i>' : ''}</span><span class="b">${fmtMsg(snippet(a.text, 96))}</span></span></button>`).join('')}</div>`;
+}
+
+const v10Home = homeHTML;
+homeHTML = function () {
+  const r = state.role;
+  const name = PERSON[r].greet.split(', ')[1];
+  const greet = `<h1 class="a-greet r" style="--i:0"><span>Good afternoon,</span><br>${name}.</h1>`;
+  if (r === 'student') {
+    const old = sectionsHTML([{ label: 'Announcements', items: [['Kickoff watch party', 'Sat Jan 9 · 9:00 AM · commons', 'New', 'gold'], ['Safety glasses on in the shop', 'Pinned by Coach Lee', '', '']] }], 5);
+    const html = v10Home();
+    return state.comp ? html : html.replace(old, annPreviewHTML(5));
+  }
+  if (state.comp) return v10Home();
+
+  if (r === 'mentor') {
+    const review = TASKS.filter(t => t.status === 'review').length, orders = ORDERS.filter(o => o.step === 0).length;
+    const wait = NOTIFS.needs.map(n => `<button type="button" class="a-due-row a-wait" ${n.task ? `data-action="open-task" data-id="${n.task}"` : 'data-action="go" data-tab="admin" data-sub="approvals"'}>${avatar(n.who, 'lg')}<span class="t"><span class="x">${n.text}</span><span>${n.when}</span></span><span class="chev">${icon('chev', 16)}</span></button>`).join('');
+    return greet
+      + `<section class="a-check r" style="--i:1"><div class="a-k"><span>IN THE SHOP NOW</span><span>BUILD MEETING</span></div><div class="a-time">18<small> / 34</small></div><div class="a-foot"><span>Mech 7 · Prog 4 · Elec 3 · CAD 4</span><button type="button" class="a-btn" data-action="go" data-tab="admin" data-sub="people">Who's here →</button></div></section>`
+      + `<div class="group-head r" style="--i:2"><h2>Waiting on you <span style="font-family:var(--mono);margin-left:4px">${NOTIFS.needs.length}</span></h2><button type="button" class="link" data-action="go" data-tab="admin" data-sub="approvals">View all</button></div>`
+      + `<div class="a-due r" style="--i:3">${wait}</div>`
+      + `<div class="a-stats r" style="--i:4"><button type="button" data-action="go" data-tab="tasks" data-sub="board"><span class="l">Tasks in review</span><span class="n">${review}</span><span class="s">Check and award points</span></button><button type="button" data-action="go" data-tab="shop" data-sub="orders"><span class="l">Orders to approve</span><span class="n">${orders}</span><span class="s gold">Before Friday's cutoff</span></button></div>`
+      + annPreviewHTML(5);
+  }
+
+  /* parent */
+  const needs = [['Sign travel permission', 'District event', 'Due Mar 1', 'Sign', 'me', 1], ['Medical form', 'Needed before first event', 'Missing', 'Upload', 'me', 1], ['Pit lunch volunteers', 'Sat Feb 21 · 2 spots left', 'Open', 'Help', 'volunteer', 0]];
+  const rows = needs.map(([t, s, w, a, tab, hot]) => `<button type="button" class="a-due-row" data-action="go" data-tab="${tab}"><span class="d${hot ? ' hot' : ''}"></span><span class="t"><b>${t}</b><span>${s}</span></span><span class="w">${w}<span>${a}</span></span></button>`).join('');
+  return greet
+    + `<section class="a-check r" style="--i:1"><div class="a-k"><span>SAM IS AT BUILD</span><span>SHOP</span></div><div class="a-time"><small>Pickup </small>6:30</div><div class="a-foot"><span>Checked in at 3:34 PM</span><button type="button" class="a-btn" data-action="toast" data-msg="Message sent to the mentors (demo)">Message mentors</button></div></section>`
+    + `<div class="group-head r" style="--i:2"><h2>Needs you <span style="font-family:var(--mono);margin-left:4px">${needs.length}</span></h2></div>`
+    + `<div class="a-due r" style="--i:3">${rows}</div>`
+    + `<div class="a-stats r" style="--i:4"><button type="button" data-action="go" data-tab="me"><span class="l">Sam's hours</span><span class="n">42.5<small> / 60</small></span><span class="bar"><i style="width:71%;background:var(--green)"></i></span></button><button type="button" data-action="go" data-tab="calendar"><span class="l">Next event</span><span class="n">Feb 21</span><span class="s gold">Week 0 · drop-off 7 AM</span></button></div>`
+    + annPreviewHTML(5);
+};
+
+/* parent announcements page (no tag filters, only posts meant for parents) */
+function parentNewsPage() {
+  return `<div class="pagewrap">${pageBar('Home', '')}<main><h1 class="title" style="margin:0">Announcements</h1>
+    <div class="alist dfeed" id="ann-feed">${annFeed().map(a => `<article id="ann-${a.id}" class="ann${state.annFocus === a.id ? ' focus' : ''}">${msgHTML(a.by, a.when, a.text, {
+      head: tagsHTML(a.tags),
+      foot: reactsHTML(a.reacts, a.id) + `<button type="button" class="ccount" data-action="ann-open" data-id="${a.id}">${icon('chat', 16)} ${a.comments.length ? `${a.comments.length} Comment${a.comments.length === 1 ? '' : 's'}` : 'Comment'}</button>`
+    }, a.unread ? 'unread' : '')}</article>`).join('')}</div></main></div>`;
+}
+const v10Profile = profilePage;
+profilePage = function () { const top = state.stack[state.stack.length - 1]; return top && top.type === 'news' ? parentNewsPage() : v10Profile(); };
+
+/* parents: banner + notifications only for posts they can see; tapping goes to their page */
+const v10Banner = bannerHTML;
+bannerHTML = function () {
+  if (state.role !== 'parent') return v10Banner();
+  const a = state.signedIn && !state.sheet && !state.stack.length ? annFeed().find(x => x.unread && !state.bannerSeen[x.id]) : null;
+  if (!a) return '';
+  return `<div class="dnotif" id="dnotif-${a.id}" role="status"><button type="button" class="dn-open" data-action="ann-go" data-id="${a.id}">${avatar(a.by, 'lg')}<span class="dn-txt"><span class="dn-head"><b style="color:${nameColor(a.by)}">${byI[a.by].n}</b> <span>${a.tags.join(' · ')}</span></span><span class="dn-body">${fmtMsg(snippet(a.text))}</span></span></button><button type="button" class="dn-x" data-action="ann-dismiss" data-id="${a.id}" aria-label="Dismiss">×</button><span class="dn-bar"></span></div>`;
+};
+const v10Notifs = notifsPage;
+notifsPage = function () {
+  if (state.role !== 'parent') return v10Notifs();
+  const hide = ANN.filter(a => a.unread && !annVisible(a));
+  hide.forEach(a => { a.unread = false; });
+  try { return v10Notifs(); } finally { hide.forEach(a => { a.unread = true; }); }
+};
+window.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action="ann-go"]'); if (!el || state.role !== 'parent') return;
+  e.stopImmediatePropagation();
+  const id = el.dataset.id, a = annById(id);
+  state.bannerSeen[id] = true; if (a) a.unread = false;
+  state.annFocus = id; state.stack = [{ type: 'news' }]; state.sheet = null;
+  render('page'); const t = app.querySelector('#ann-' + id); if (t) t.scrollIntoView({ block: 'start' });
 }, true);
 
 render();
