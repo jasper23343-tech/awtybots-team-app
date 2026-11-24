@@ -360,6 +360,51 @@ body { background: #050505; }
 .a-stats .n { font-size: 38px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
 .a-stats .n small { font-size: 16px; color: #6E6E69; letter-spacing: 0; }
 .a-stats .bar { height: 4px; }
+
+/* ===== Motion, iOS style: depth for navigation, quiet everywhere else ===== */
+:root { --ios: cubic-bezier(0.32, 0.72, 0, 1); }
+[data-anim] .r, [data-anim] .pagewrap, [data-anim] .bar i, .subtab[aria-selected="true"]::after, .tab[aria-current="page"] .pill { animation: none !important; }
+button { -webkit-tap-highlight-color: transparent; transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.2s ease; }
+button:active { transform: scale(0.97); }
+.row:active, .a-due-row:active, .check:active { transform: none; background: rgba(255,255,255,0.05); }
+.tab:active, .subtab:active { transform: none; opacity: 0.6; }
+.sheet-wrap.new .sheet { animation: iosSheetUp 0.5s var(--ios) both; }
+.sheet-wrap.new .scrim { animation: iosFade 0.35s ease both; }
+.toast { animation: iosToast 2.6s var(--ios) both; }
+@keyframes iosSheetUp { from { transform: translateY(100%); } }
+@keyframes iosFade { from { opacity: 0; } }
+@keyframes iosToast { 0% { opacity: 0; transform: translate(-50%, 16px) scale(0.96); } 10%, 88% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, 0) scale(0.98); } }
+
+#app { view-transition-name: screen; }
+.pagewrap { view-transition-name: page; }
+.tabs { view-transition-name: tabbar; }
+.sheet { view-transition-name: sheet; }
+.scrim { view-transition-name: scrim; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(*) { animation-duration: 0.5s; animation-timing-function: var(--ios); }
+::view-transition-old(tabbar), ::view-transition-new(tabbar) { animation: none; }
+html[data-vt="push"]::view-transition-new(page) { animation: iosInRight 0.5s var(--ios) both; }
+html[data-vt="push"]::view-transition-old(page), html[data-vt="push"]::view-transition-old(screen) { animation: iosOutLeft 0.5s var(--ios) both; }
+html[data-vt="push"]::view-transition-new(screen) { animation: none; }
+html[data-vt="back"]::view-transition-old(page) { animation: iosOutRight 0.42s var(--ios) both; }
+html[data-vt="back"]::view-transition-new(page), html[data-vt="back"]::view-transition-new(screen) { animation: iosInLeft 0.42s var(--ios) both; }
+html[data-vt="back"]::view-transition-old(screen) { animation: none; opacity: 0; }
+html[data-vt="fade"]::view-transition-old(screen) { animation: iosFadeOut 0.16s ease both; }
+html[data-vt="fade"]::view-transition-new(screen) { animation: iosFade 0.2s ease 0.04s both; }
+html[data-vt="sheet-close"]::view-transition-old(sheet) { animation: iosSheetDown 0.34s var(--ios) both; }
+html[data-vt="sheet-close"]::view-transition-old(scrim) { animation: iosFadeOut 0.28s ease both; }
+html[data-vt="sheet-close"]::view-transition-old(screen), html[data-vt="sheet-close"]::view-transition-new(screen) { animation: none; }
+@keyframes iosInRight { from { transform: translateX(42%); opacity: 0; } }
+@keyframes iosOutLeft { to { transform: translateX(-24%); opacity: 0.35; } }
+@keyframes iosOutRight { to { transform: translateX(42%); opacity: 0; } }
+@keyframes iosInLeft { from { transform: translateX(-24%); opacity: 0.35; } }
+@keyframes iosFadeOut { to { opacity: 0; } }
+@keyframes iosSheetDown { to { transform: translateY(100%); } }
+@media (max-width: 960px) {
+  @keyframes iosInRight { from { transform: translateX(100%); } }
+  @keyframes iosOutRight { to { transform: translateX(100%); } }
+}
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -1055,6 +1100,29 @@ homeHTML = function () {
     + `<div class="a-due r" style="--i:3">${rows}</div>`
     + `<div class="a-stats r" style="--i:4"><button type="button" data-action="go" data-tab="team" data-sub="hours"><span class="l">Hours this season</span><span class="n">42.5<small> / 60</small></span><span class="bar"><i style="width:71%;background:var(--green)"></i></span></button><button type="button" data-action="go" data-tab="tasks" data-sub="leaders"><span class="l">Points</span><span class="n">${byI.SR.pts}</span><span style="font-size:13px;color:var(--gold);font-weight:500">1st on the board</span></button></div>`
     + sectionsHTML([{ label: 'Announcements', items: [['Kickoff watch party', 'Sat Jan 9 · 9:00 AM · commons', 'New', 'gold'], ['Safety glasses on in the shop', 'Pinned by Coach Lee', '', '']] }], 5);
+};
+
+/* Motion: View Transitions for navigation depth (push/back), a quick fade between tabs, sheets slide away */
+const v2Render = render;
+let lastDepth = 0, lastSheet = null, lastKey = '';
+render = function (anim = '1') {
+  const depth = state.stack.length, sheet = state.sheet;
+  const key = state.signedIn + '|' + state.role + '|' + state.tab + '|' + (state.sub[state.tab] || '');
+  let kind = null;
+  if (depth > lastDepth) kind = 'push';
+  else if (depth < lastDepth) kind = 'back';
+  else if (!sheet && lastSheet) kind = 'sheet-close';
+  else if (key !== lastKey && lastKey) kind = 'fade';
+  lastDepth = depth; lastSheet = sheet; lastKey = key;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!kind || !document.startViewTransition || reduce) { v2Render('0'); return; }
+  const m = app.querySelector('main'), y = m ? m.scrollTop : 0;
+  document.documentElement.dataset.vt = kind;
+  const t = document.startViewTransition(() => {
+    v2Render('0');
+    if (kind === 'sheet-close') { const n = app.querySelector('main'); if (n) n.scrollTop = y; }
+  });
+  t.finished.finally(() => { if (document.documentElement.dataset.vt === kind) delete document.documentElement.dataset.vt; });
 };
 
 render();
