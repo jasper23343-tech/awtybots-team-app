@@ -496,6 +496,46 @@ main > * { flex-shrink: 0; }
 .dn-body { font-size: 14px; line-height: 1.4; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .dn-x { width: 40px; height: 44px; border: none; background: none; color: var(--text-3); font-size: 22px; }
 .dn-row { width: 100%; border: none; background: none; text-align: left; align-items: flex-start; color: var(--text); }
+
+/* ===== v7: profile, inventory ===== */
+.name-edit { gap: 12px; }
+.name-edit input { width: 100%; margin-top: 6px; min-height: 42px; border-radius: 10px; border: 1px solid var(--gold); background: var(--bg-2); padding: 8px 12px; font-size: 16px; color: var(--text); }
+.btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.inv-search .search { width: 100%; }
+.inv-low { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(255, 148, 102, 0.35); background: var(--warn-soft); text-align: left; color: var(--text); }
+.inv-low.on { border-color: var(--warn); }
+.il-n { font-size: 28px; font-weight: 600; color: var(--warn); letter-spacing: -0.02em; min-width: 30px; }
+.inv-low .txt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.inv-low .ttl { font-weight: 600; }
+.inv-areas { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
+.area { flex: none; width: 132px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--card); text-align: left; color: var(--text); }
+.area i, .pmeta i, .where i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.area b { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.area span { font-size: 12px; color: var(--text-3); font-family: var(--mono); }
+.area.on { border-color: var(--gold); background: var(--gold-soft); }
+.inv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pcard { display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); text-align: left; color: var(--text); min-width: 0; }
+.pimg, .part-hero { display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; border-radius: 10px; background: #EDEBE6; overflow: hidden; }
+.pimg img, .part-hero img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; padding: 8px; }
+.noimg { color: #8F8F8A; }
+.pname { font-size: 14px; font-weight: 600; line-height: 1.3; padding: 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }
+.pmeta { display: flex; flex-direction: column; gap: 3px; padding: 0 4px; font-size: 12px; color: var(--text-3); }
+.pmeta b { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 600; }
+.pmeta b.lowq { color: var(--warn); }
+.pmeta span { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.part-hero { aspect-ratio: 16 / 10; border-radius: 18px; }
+.where { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0; border: none; background: none; color: var(--text-2); font-size: 14px; text-align: left; }
+.where b { color: var(--text); font-weight: 600; }
+.stock { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
+.stock-top { display: flex; justify-content: space-between; align-items: center; }
+.stock-top .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.stock-ctl { display: flex; align-items: center; justify-content: space-between; }
+.stock-ctl button { width: 56px; height: 56px; border-radius: 16px; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--text); font-size: 26px; }
+.stock-ctl button:disabled { opacity: 0.3; }
+.stock-n { font-size: 48px; font-weight: 600; letter-spacing: -0.03em; display: flex; align-items: baseline; gap: 6px; }
+.stock-n small { font-size: 15px; color: var(--text-3); font-weight: 500; letter-spacing: 0; }
+.stock-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.stock-quick .opt { font-family: var(--mono); }
 </style>
 </head>
 <body>
@@ -535,6 +575,7 @@ main > * { flex-shrink: 0; }
 </div>
 
 <script src="vendor/awty-libs.js"></script>
+<script src="vendor/inventory-data.js"></script>
 <script>
 /* ---------------- icons ---------------- */
 const ICONS = {
@@ -1659,6 +1700,183 @@ document.addEventListener('submit', (e) => {
   annById(fm.dataset.anncomment).comments.push({ by: me().i, when: 'Just now', text: txt, reacts: [] });
   input.value = ''; rr();
 });
+
+/* ===== v7: instant reactions, your own calendar events, profile photo + name, inventory ===== */
+
+/* reactions: counts change instantly, nothing slides around */
+reactsHTML = function (list, key) {
+  const open = state.picker === key;
+  return `<div class="reacts" id="rx-${key}">${list.map(([e, c, mine], n) => `<button type="button" class="react" data-action="react" data-key="${key}" data-e="${e}" aria-pressed="${!!mine}" aria-label="${e} ${c}, ${mine ? 'remove your reaction' : 'react'}"><span class="e">${e}</span><span>${c}</span></button>`).join('')}<button type="button" class="react add" data-action="picker" data-key="${key}" aria-expanded="${open}" aria-label="Add reaction">${svg('<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="10" r="1.2" fill="currentColor"/><circle cx="15" cy="10" r="1.2" fill="currentColor"/>', 20)}</button></div>
+    ${open ? `<div class="picker" role="listbox" aria-label="Pick a reaction">${EMOJI.map(e => `<button type="button" data-action="react" data-key="${key}" data-e="${e}" role="option">${e}</button>`).join('')}</div>` : ''}`;
+};
+const v6News = newsHTML;
+newsHTML = function () { return v6News().replace('id="ann-feed" data-aa', 'id="ann-feed"'); };
+
+/* ---- profile: photo and display name, saved on this device ---- */
+const meIni = () => PERSON[state.role].initials;
+const SAVED = (() => { try { return JSON.parse(localStorage.getItem('awty-me') || '{}'); } catch (e) { return {}; } })();
+const saveMe = () => { try { localStorage.setItem('awty-me', JSON.stringify(SAVED)); } catch (e) { state.toast = 'Photo too big to save on this device'; } };
+const DEFAULT_NAMES = { SR: 'Sam Rivera', CL: 'Coach Lee', JR: 'Jordan Rivera' };
+function applyName(ini, n) {
+  if (byI[ini]) byI[ini].n = n;
+  const role = Object.keys(PERSON).find(r => PERSON[r].initials === ini);
+  if (role) PERSON[role].greet = (role === 'student' ? 'Hey, ' : 'Hi, ') + (role === 'mentor' && n === 'Coach Lee' ? 'Coach' : n.split(' ')[0]);
+}
+Object.entries(SAVED).forEach(([ini, v]) => { if (v.n) applyName(ini, v.n); });
+function pfpCSS() { return Object.entries(SAVED).filter(([, v]) => v.pic).map(([ini, v]) => `.pfp-${ini}{background:url(${v.pic}) center/cover no-repeat !important;color:transparent !important}`).join(''); }
+function syncPfpStyle() { let s = document.getElementById('pfp-style'); if (!s) { s = document.createElement('style'); s.id = 'pfp-style'; document.head.appendChild(s); } const css = pfpCSS(); if (s.textContent !== css) s.textContent = css; }
+const v6Morph = morphApp;
+morphApp = function (html) {
+  Object.keys(SAVED).filter(ini => SAVED[ini].pic).forEach(ini => {
+    html = html.replace(new RegExp(`<span class="av ([^"]*)" style="background:[^"]*" title="([^"]*)">${ini}</span>`, 'g'), `<span class="av $1 pfp-${ini}" title="$2">${ini}</span>`)
+      .replace(new RegExp(`class="avatarbtn" (data-action="push" data-page="profile" aria-label="Profile and settings">)${ini}<`, 'g'), `class="avatarbtn pfp-${ini}" $1${ini}<`);
+  });
+  syncPfpStyle(); v6Morph(html);
+};
+const v6Profile = profilePage;
+profilePage = function () {
+  const top = state.stack[state.stack.length - 1];
+  if (top && top.type !== 'profile') return v6Profile();
+  const ini = meIni(), name = (SAVED[ini] && SAVED[ini].n) || DEFAULT_NAMES[ini], pic = SAVED[ini] && SAVED[ini].pic;
+  let html = v6Profile().split(DEFAULT_NAMES[ini]).join(esc(name));
+  html = html.replace(/(<span class="av)(" style="width:72px[^"]*">)/, `$1 pfp-${ini}$2`);
+  const rows = `<section class="group"><h2>Profile</h2><div class="list">
+    <label class="row" style="cursor:pointer"><span class="av pfp-${ini}" style="width:40px;height:40px;background:var(--green-deep)">${ini}</span><span class="txt"><span class="ttl">Profile picture</span><span class="mt">${pic ? 'Tap to change' : 'Upload a photo'}</span></span><span class="chev">${icon('chev', 16)}</span><input type="file" accept="image/*" data-pfp hidden></label>
+    ${pic ? `<button type="button" class="row" data-action="pfp-remove"><span class="txt"><span class="ttl" style="color:var(--warn)">Remove photo</span></span></button>` : ''}
+    ${state.editName ? `<form class="row name-edit" data-nameform><span class="txt"><span class="mt">Display name</span><input name="n" value="${esc(name).replace(/"/g, '&quot;')}" maxlength="40" autocomplete="off" aria-label="Display name"></span><button type="submit" class="btn btn-gold btn-sm">Save</button></form>`
+      : `<button type="button" class="row" data-action="name-edit"><span class="txt"><span class="ttl">Display name</span><span class="mt">${esc(name)}</span></span><span class="chev">${icon('chev', 16)}</span></button>`}
+  </div><span class="mt" style="color:var(--text-3)">Your name shows on tasks, the leaderboard and announcements.</span></section>`;
+  return html.replace(/<section class="group[^"]*"[^>]*><h2>Profile<\/h2>[\s\S]*?<\/section>/, rows);
+};
+document.addEventListener('change', (e) => {
+  if (!e.target.matches('[data-pfp]')) return;
+  const file = e.target.files[0]; if (!file) return;
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const c = document.createElement('canvas'), s = 256, k = Math.max(s / img.width, s / img.height);
+    c.width = c.height = s; c.getContext('2d').drawImage(img, (s - img.width * k) / 2, (s - img.height * k) / 2, img.width * k, img.height * k);
+    const ini = meIni(); SAVED[ini] = { ...(SAVED[ini] || {}), pic: c.toDataURL('image/jpeg', 0.85) }; saveMe();
+    URL.revokeObjectURL(url); state.toast = 'Profile picture updated'; rr();
+  };
+  img.src = url;
+});
+document.addEventListener('submit', (e) => {
+  const fm = e.target.closest('[data-nameform]'); if (!fm) return;
+  e.preventDefault();
+  const n = fm.querySelector('input').value.trim().replace(/\s+/g, ' ');
+  if (!n) return;
+  const ini = meIni(); SAVED[ini] = { ...(SAVED[ini] || {}), n }; saveMe(); applyName(ini, n);
+  state.editName = false; state.toast = 'Name updated'; rr();
+});
+
+/* ---- calendar: your own events, and team events for leads and mentors ---- */
+EV_COLOR.mine = '#B58CFF'; EV_COLOR.team = 'var(--gold)';
+const fmtTime = (t) => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${(h + 11) % 12 + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+const v6Team = teamHTML;
+teamHTML = function () {
+  if (state.sub.team !== 'calendar') return v6Team();
+  const add = `<button type="button" class="btn btn-gold" data-action="sheet" data-sheet="newevent">${icon('plus', 18)} New event</button>`;
+  if (state.calView === 'month') return add + calToggle() + monthCalHTML().replace('<div class="legend">', `<div class="legend"><span><i style="background:${EV_COLOR.mine}"></i>Yours</span>`);
+  const fmtD = (iso) => { const d = dateOf(iso); return `${DOW[d.getDay()]} ${MON[d.getMonth()]} ${d.getDate()}`; };
+  const row = (e) => [e.title, `${fmtD(e.d)} · ${[e.time, e.where].filter(Boolean).join(' · ')}`, e.kind === 'mine' ? 'Just you' : 'New', e.kind === 'mine' ? '' : 'gold'];
+  const mine = EVENTS.filter(e => e.kind === 'mine' && e.d >= isoOf(TODAY)).sort((a, b) => a.d.localeCompare(b.d));
+  const team = EVENTS.filter(e => e.kind === 'team' && e.d >= isoOf(TODAY)).sort((a, b) => a.d.localeCompare(b.d));
+  const secs = [...(mine.length ? [{ label: 'Your events', items: mine.map(row) }] : []), ...(team.length ? [{ label: 'Added by leads', items: team.map(row) }] : []), ...GENERIC.calendar];
+  return add + calToggle() + sectionsHTML(secs);
+};
+const v6Sheet2 = sheetHTML;
+sheetHTML = function () {
+  if (state.sheet !== 'newevent') return v6Sheet2();
+  if (state.formKind !== 'newevent') { state.formKind = 'newevent'; state.formErr = ''; state.calOpen = false; state.form = { title: '', due: state.calView === 'month' && state.mcalDay >= isoOf(TODAY) ? state.mcalDay : isoOf(TODAY), allday: 'no', start: '15:30', end: '17:00', where: '', who: 'me' }; const x = dateOf(state.form.due); state.calMonth = [x.getFullYear(), x.getMonth()]; }
+  const f = state.form;
+  const body = textField('title', 'What', 'e.g. Dentist, study group, CAD review') + (state.formErr ? `<span class="ferr">${state.formErr}</span>` : '')
+    + dateField().replace('<span class="k">Due</span>', '<span class="k">Date</span>')
+    + optGroup('Time', 'allday', [['no', 'Set a time'], ['yes', 'All day']])
+    + (f.allday === 'no' ? `<div class="field-row"><div class="field"><label for="ff-start">Starts</label><input id="ff-start" type="time" data-f="start" value="${f.start}"></div><div class="field"><label for="ff-end">Ends</label><input id="ff-end" type="time" data-f="end" value="${f.end}"></div></div>` : '')
+    + textField('where', 'Where', 'Optional')
+    + (canPost() ? optGroup('Who sees it', 'who', [['me', 'Just me'], ['team', 'Everyone on the team']]) + (f.who === 'team' ? '<p class="count-line" style="margin:0">Everyone gets a notification, and it shows on their calendar.</p>' : '') : '<p class="count-line" style="margin:0">Only you can see this. Leads can add events for the whole team.</p>');
+  return `<div class="sheet-wrap"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="New event"><div class="handle"></div><div class="sh"><h2>New event</h2><button type="button" class="link" data-action="close-sheet">Close</button></div><div class="sb">${body}</div><div class="sf"><button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="save-event">Add to calendar</button></div></div></div>`;
+};
+
+/* ---- inventory: the real 93 parts from the inventory app ---- */
+const INV_IMG = 'https://jasper23343-tech.github.io/frc-inventory/';
+const AREAS = window.AREAS || [], CATS = window.CATEGORIES || [], PARTS = (window.SEED_PARTS || []).map(p => ({ ...p }));
+const areaById = (id) => AREAS.find(a => a.id === id) || { name: id, color: '#888' };
+const partById = (id) => PARTS.find(p => p.id === id);
+const isLow = (p) => p.qty < p.min;
+const escA = (s) => esc(String(s)).replace(/"/g, '&quot;');
+state.inv = { cat: 'All', area: null, q: '', low: false };
+const partImg = (p, cls = '') => p.cover ? `<img class="${cls}" src="${INV_IMG}img/cover/${p.cover}.jpg" alt="" loading="lazy" decoding="async">` : `<span class="noimg">${icon('shop', 28)}</span>`;
+function invList() {
+  const s = state.inv, q = s.q.trim().toLowerCase();
+  return PARTS.filter(p => (s.cat === 'All' || p.cat === s.cat) && (!s.area || p.area === s.area) && (!s.low || isLow(p))
+    && (!q || `${p.name} ${p.sub} ${p.spot} ${areaById(p.area).name}`.toLowerCase().includes(q)));
+}
+function inventoryHTML() {
+  const s = state.inv, list = invList(), low = PARTS.filter(isLow);
+  const cats = ['All', ...CATS.map(c => c.name)];
+  return `<div class="inv-search"><input class="search" type="search" data-invq value="${escA(s.q)}" placeholder="Search ${PARTS.length} parts" aria-label="Search parts" autocomplete="off"></div>
+    ${low.length ? `<button type="button" class="inv-low${s.low ? ' on' : ''}" data-action="inv-low"><span class="il-n">${nf('inv-lown', low.length)}</span><span class="txt"><span class="ttl">parts running low</span><span class="mt">${s.low ? 'Showing only these · tap to show all' : 'Below the minimum count · tap to see them'}</span></span><span class="chev">${icon('chev', 16)}</span></button>` : ''}
+    <div class="inv-areas" role="group" aria-label="Places">${AREAS.map(a => `<button type="button" class="area${s.area === a.id ? ' on' : ''}" data-action="inv-area" data-id="${a.id}" aria-pressed="${s.area === a.id}"><i style="background:${a.color}"></i><b>${a.name}</b><span>${PARTS.filter(p => p.area === a.id).length} parts</span></button>`).join('')}</div>
+    <div class="toolbar" role="group" aria-label="Category">${cats.map(c => `<button type="button" class="fbtn${s.cat === c ? ' on' : ''}" data-action="inv-cat" data-c="${escA(c)}">${c}${c === 'All' ? '' : ` <span style="color:var(--text-3)">${PARTS.filter(p => p.cat === c).length}</span>`}</button>`).join('')}</div>
+    <div class="count-line">${nf('inv-count', list.length)} part${list.length === 1 ? '' : 's'}${s.area ? ` in ${areaById(s.area).name}` : ''}${s.area || s.low || s.cat !== 'All' || s.q ? ' · <button type="button" class="link" data-action="inv-clear">Clear</button>' : ''}</div>
+    <div class="inv-grid" id="inv-grid" data-aa>${list.map(p => `<button type="button" class="pcard" id="pc-${p.id}" data-action="open-part" data-id="${p.id}"><span class="pimg">${partImg(p)}</span><span class="pname">${esc(p.name)}</span><span class="pmeta"><b class="${isLow(p) ? 'lowq' : ''}">${p.qty} ${p.unit}</b><span><i style="background:${areaById(p.area).color}"></i>${areaById(p.area).name}</span></span></button>`).join('') || '<div class="note" id="inv-empty" style="padding:40px 0;grid-column:1/-1">No parts match.</div>'}</div>`;
+}
+const ACC = [['perfect', 'Perfect'], ['good', 'Good'], ['rough', 'Rough'], ['off', 'Way off']];
+function partPage(p) {
+  const a = areaById(p.area), low = isLow(p);
+  return `<div class="pagewrap">${pageBar('Inventory', '')}<main>
+    <div class="part-hero">${partImg(p)}</div>
+    <div class="stack" style="gap:8px"><span class="k" style="color:var(--text-3);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase">${p.cat} · ${p.sub}</span><h1 class="dt-title">${esc(p.name)}</h1>
+      <button type="button" class="where" data-action="inv-goarea" data-id="${p.area}"><i style="background:${a.color}"></i><b>${a.name}</b><span>${esc(p.spot)}</span></button></div>
+    <section class="stock"><div class="stock-top"><span class="k">In stock</span>${low ? `<span class="badge t-warn">Low · want ${p.min}+</span>` : `<span class="badge t-green">OK · min ${p.min}</span>`}</div>
+      <div class="stock-ctl"><button type="button" data-action="part-qty" data-id="${p.id}" data-d="-1" aria-label="One less" ${p.qty <= 0 ? 'disabled' : ''}>−</button><span class="stock-n">${nf('pq-' + p.id, p.qty)}<small>${p.unit}</small></span><button type="button" data-action="part-qty" data-id="${p.id}" data-d="1" aria-label="One more">+</button></div>
+      <div class="stock-quick">${[-10, -5, 5, 10].map(d => `<button type="button" class="opt" data-action="part-qty" data-id="${p.id}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('')}</div></section>
+    <section class="group"><h2>How accurate is this count?</h2><div class="seg" role="group" aria-label="Count accuracy">${ACC.map(([v, l]) => `<button type="button" data-action="part-acc" data-id="${p.id}" data-v="${v}" aria-pressed="${(p.conf === 'good' && v === 'good') || p.conf === v}">${l}</button>`).join('')}</div>
+      <span class="mt" style="color:var(--text-3)">Counts started as estimates from the Nov 7 shop photos. Fix them when you use a part.</span></section>
+    ${low ? `<button type="button" class="btn btn-gold" data-action="part-request" data-id="${p.id}">Request more · order ${Math.max(p.min * 2 - p.qty, 1)}</button>` : `<button type="button" class="btn btn-outline" data-action="part-request" data-id="${p.id}">Request more</button>`}
+  </main></div>`;
+}
+const v6Shop = shopHTML;
+shopHTML = function () { return state.sub.shop === 'inventory' ? inventoryHTML() : v6Shop(); };
+const v7Profile = profilePage;
+profilePage = function () { const top = state.stack[state.stack.length - 1]; return top && top.type === 'part' ? partPage(partById(top.id)) : v7Profile(); };
+
+document.addEventListener('input', (e) => {
+  if (e.target.matches('[data-invq]')) { state.inv.q = e.target.value; rr(); }
+});
+const V7 = ['pfp-remove', 'name-edit', 'save-event', 'inv-cat', 'inv-area', 'inv-low', 'inv-clear', 'inv-goarea', 'open-part', 'part-qty', 'part-acc', 'part-request'];
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]'); if (!el || !V7.includes(el.dataset.action)) return;
+  e.stopImmediatePropagation();
+  const d = { ...el.dataset };
+  switch (d.action) {
+    case 'pfp-remove': { const ini = meIni(); if (SAVED[ini]) delete SAVED[ini].pic; saveMe(); rr(); break; }
+    case 'name-edit': state.editName = true; rr(); { const i = app.querySelector('[data-nameform] input'); if (i) { i.focus(); i.select(); } } break;
+    case 'save-event': {
+      const f = state.form;
+      if (!f.title.trim()) { state.formErr = 'Give the event a name.'; state.formErrKey = 'title'; rr(); break; }
+      const team = canPost() && f.who === 'team';
+      EVENTS.push({ d: f.due, title: esc(f.title.trim()), time: f.allday === 'yes' ? 'All day' : `${fmtTime(f.start)} – ${fmtTime(f.end)}`, where: esc(f.where.trim()), kind: team ? 'team' : 'mine' });
+      state.mcalDay = f.due; const x = dateOf(f.due); state.mcal = [x.getFullYear(), x.getMonth()];
+      state.sheet = null; state.formKind = null; state.toast = team ? 'Added to everyone\'s calendar' : 'Added to your calendar'; rr(); break;
+    }
+    case 'inv-cat': state.inv.cat = d.c; rr(); break;
+    case 'inv-area': state.inv.area = state.inv.area === d.id ? null : d.id; rr(); break;
+    case 'inv-low': state.inv.low = !state.inv.low; rr(); break;
+    case 'inv-clear': state.inv = { cat: 'All', area: null, q: '', low: false }; rr(); break;
+    case 'inv-goarea': state.inv = { cat: 'All', area: d.id, q: '', low: false }; state.stack = []; render(); scrollTop(); break;
+    case 'open-part': state.stack.push({ type: 'part', id: d.id }); render('page'); scrollTop(); break;
+    case 'part-qty': { const p = partById(d.id); p.qty = Math.max(0, p.qty + +d.d); rr(); break; }
+    case 'part-acc': partById(d.id).conf = d.v; rr(); break;
+    case 'part-request': {
+      const p = partById(d.id), n = Math.max(p.min * 2 - p.qty, 1);
+      ORDERS.unshift({ id: 'o' + Date.now(), name: p.name, price: 0, qty: n, vendor: VENDORS[0], by: 'SR', when: 'just now', step: 0, note: `Restock for ${areaById(p.area).name} · ${p.spot}` });
+      state.toast = `Order request for ${n} sent to mentors`; rr(); break;
+    }
+  }
+}, true);
 
 render();
 </script>
