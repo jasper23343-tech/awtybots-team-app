@@ -339,6 +339,27 @@ body { background: #050505; }
 .a-check.green { background: #10261A; color: var(--text); border: 1px solid rgba(47,179,109,0.35); }
 .a-check.green .a-foot { color: var(--green-hi); }
 .a-check.green .a-btn { background: var(--gold); color: var(--gold-ink); }
+
+.top.a-home { padding-bottom: 10px; gap: 0; }
+.a-greet { margin: 2px 0 4px; }
+.a-due { display: flex; flex-direction: column; margin-top: -10px; }
+.a-due-row { width: 100%; min-height: 62px; display: flex; align-items: center; gap: 14px; padding: 0; background: none; border: none; border-bottom: 1px solid var(--line); color: inherit; text-align: left; font: inherit; }
+.a-due-row .d { width: 8px; height: 8px; border-radius: 50%; background: #3A3A37; flex: none; }
+.a-due-row .d.hot { background: var(--gold); }
+.a-due-row .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.a-due-row .t b { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+.a-due-row .t span, .a-due-row .w span { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.a-due-row .w { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: none; font-family: var(--mono); font-size: 13px; }
+.a-due-row .w span { color: var(--gold); }
+.a-due-row:hover b { color: var(--gold); }
+.a-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.a-stats > * { display: flex; flex-direction: column; gap: 8px; background: none; border: none; color: inherit; text-align: left; font: inherit; padding: 0; }
+.a-stats > :first-child { padding-right: 18px; border-right: 1px solid var(--line); }
+.a-stats > :last-child { padding-left: 18px; }
+.a-stats .l { font-size: 13px; color: var(--text-3); }
+.a-stats .n { font-size: 38px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+.a-stats .n small { font-size: 16px; color: #6E6E69; letter-spacing: 0; }
+.a-stats .bar { height: 4px; }
 </style>
 </head>
 <body>
@@ -998,7 +1019,8 @@ function topHeader(title) {
   const me = `<button type="button" class="avatarbtn" data-action="push" data-page="profile" aria-label="Profile and settings">${p.initials}</button>`;
   if (state.tab === 'home') {
     const name = p.greet.split(', ')[1];
-    return `<header class="top a-home"><div class="a-row"><span class="date">${state.comp ? 'SAT 21 FEB' : 'TUE 24 NOV'}${state.comp ? ' <span class="event-chip">EVENT MODE</span>' : ''}</span><div class="a-icons">${bell}${me}</div></div><h1 class="a-greet"><span>Good afternoon,</span><br>${name}.</h1></header>`;
+    const role = { student: 'ELECTRICAL LEAD', parent: 'PARENT', mentor: 'ADMIN' }[state.role];
+    return `<header class="top a-home"><div class="a-row"><span class="date">${state.comp ? 'SAT 21 FEB' : 'TUE 24 NOV'} · ${role}</span><div class="a-icons">${bell}${me}</div></div></header>`;
   }
   return `<header class="top"><div class="tl"><h1 class="title">${title}</h1></div>${bell}${me}</header>`;
 }
@@ -1015,6 +1037,25 @@ function heroHTML(i) {
   if (r === 'mentor') return `<section class="hero r" ${s}><span class="k">IN THE SHOP NOW</span><div class="baseline"><span class="big">18</span><span class="sub">/ 34 members</span></div><div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[['7', 'Mech'], ['4', 'Prog'], ['3', 'Elec'], ['4', 'CAD']].map(([n, l]) => `<div class="tile" style="padding:10px 6px;align-items:center;background:rgba(255,255,255,0.04)"><b style="font-size:22px">${n}</b><span>${l}</span></div>`).join('')}</div></section>`;
   return `<section class="hero r" ${s}><span class="k">SAM THIS SEASON</span><div class="baseline"><span class="big">42.5<span style="font-size:24px;color:var(--text-3)"> / 60 h</span></span></div><div class="bar"><i style="width:71%;background:var(--green)"></i></div><span class="note ok" style="justify-content:flex-start">Checked in today at 3:34 PM</span></section>`;
 }
+
+/* Home: greeting scrolls with the page, layout matches the Claude Design mockup */
+const v2Home = homeHTML;
+homeHTML = function () {
+  const name = PERSON[state.role].greet.split(', ')[1];
+  const greet = `<h1 class="a-greet r" style="--i:0"><span>Good afternoon,</span><br>${name}.</h1>`;
+  if (state.role !== 'student' || state.comp) return greet + v2Home();
+  const mine = filteredTasks('mine');
+  const rows = mine.slice(0, 3).map(t => {
+    const done = t.checklist.filter(c => c[1]).length;
+    const steps = t.checklist.length ? ` · ${done}/${t.checklist.length} done` : '';
+    return `<button type="button" class="a-due-row" data-action="open-task" data-id="${t.id}"><span class="d${t.prio === 'high' || t.prio === 'critical' ? ' hot' : ''}"></span><span class="t"><b>${t.title}</b><span>${t.team}${steps}</span></span><span class="w">${t.due}<span>${t.pts} pts</span></span></button>`;
+  }).join('');
+  return greet + heroHTML(1)
+    + `<div class="group-head r" style="--i:2"><h2>Due soon <span style="font-family:var(--mono);margin-left:4px">${mine.length}</span></h2><button type="button" class="link" data-action="go" data-tab="tasks" data-sub="mine">View all</button></div>`
+    + `<div class="a-due r" style="--i:3">${rows}</div>`
+    + `<div class="a-stats r" style="--i:4"><button type="button" data-action="go" data-tab="team" data-sub="hours"><span class="l">Hours this season</span><span class="n">42.5<small> / 60</small></span><span class="bar"><i style="width:71%;background:var(--green)"></i></span></button><button type="button" data-action="go" data-tab="tasks" data-sub="leaders"><span class="l">Points</span><span class="n">${byI.SR.pts}</span><span style="font-size:13px;color:var(--gold);font-weight:500">1st on the board</span></button></div>`
+    + sectionsHTML([{ label: 'Announcements', items: [['Kickoff watch party', 'Sat Jan 9 · 9:00 AM · commons', 'New', 'gold'], ['Safety glasses on in the shop', 'Pinned by Coach Lee', '', '']] }], 5);
+};
 
 render();
 </script>
