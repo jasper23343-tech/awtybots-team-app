@@ -1,0 +1,1475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F6F4EF">
+<title>Awtybots 5829 — app v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root {
+  --bg: #F6F4EF; --bg-2: #FFFFFF; --card: #FFFFFF; --card-2: #F3F1EB;
+  --line: rgba(22,32,27,0.07); --line-2: rgba(22,32,27,0.13);
+  --text: #16201B; --text-2: #55605A; --text-3: #6A746E;
+  --gold: #F2B81F; --gold-ink: #2A1E00; --gold-soft: rgba(242,184,31,0.2); --gold-text: #7A5900;
+  --green: #1F9D57; --green-hi: #137A42; --green-deep: #E4F3EA; --green-soft: rgba(31,157,87,0.13);
+  --warn: #B5410F; --warn-soft: rgba(229,83,61,0.12);
+  --shadow: 0 1px 2px rgba(40,32,12,0.04), 0 8px 24px rgba(40,32,12,0.07);
+  --ease: cubic-bezier(0.16,1,0.3,1); --ease-back: cubic-bezier(0.34,1.56,0.64,1);
+  --display: 'Plus Jakarta Sans', system-ui, sans-serif; --body: 'Plus Jakarta Sans', system-ui, sans-serif; --mono: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: #070908; color: var(--text); font-family: var(--body); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* stage */
+.stage { min-height: 100%; display: flex; align-items: center; justify-content: center; gap: 64px; padding: 30px; }
+.side { width: 320px; display: flex; flex-direction: column; gap: 26px; }
+.kicker { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--gold); }
+.side h1 { margin: 8px 0 0; font-family: var(--display); font-weight: 700; font-size: 42px; line-height: 0.95; letter-spacing: -0.035em; }
+.side p { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+.side .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: 10px; }
+.levels { display: flex; flex-direction: column; gap: 10px; }
+.level { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.level b { width: 28px; height: 28px; border-radius: 8px; background: var(--gold-soft); color: var(--gold); font-family: var(--mono); font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.level span { font-size: 14px; line-height: 1.45; color: var(--text-2); }
+.level strong { color: var(--text); font-weight: 600; }
+.jump { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.jump button { min-height: 44px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--bg-2); font-size: 14px; font-weight: 500; transition: border-color .25s var(--ease); }
+.jump button:hover { border-color: var(--gold); }
+.jump button[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); color: var(--gold); }
+.switch { display: flex; align-items: center; gap: 12px; min-height: 44px; background: none; border: none; padding: 0; font-size: 14px; font-weight: 500; text-align: left; }
+.switch .track { width: 44px; height: 26px; flex: none; border-radius: 13px; background: var(--line-2); position: relative; transition: background .25s var(--ease); }
+.switch .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--text); transition: transform .35s var(--ease-back); }
+.switch[aria-checked="true"] .track { background: var(--green); }
+.switch[aria-checked="true"] .knob { transform: translateX(18px); }
+
+.phone { width: 390px; height: min(844px, calc(100vh - 60px)); flex: none; border-radius: 48px; background: var(--bg); border: 1px solid var(--line-2); box-shadow: 0 0 0 10px #151816, 0 40px 120px rgba(0,0,0,0.55); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+#app { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+@media (max-width: 960px) {
+  .side { display: none; }
+  .stage { padding: 0; display: block; }
+  .phone { width: 100%; height: 100dvh; border-radius: 0; border: none; box-shadow: none; }
+}
+
+/* motion */
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn { from { opacity: 0.4; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { 0% { transform: scaleX(0.4); } 100% { transform: scaleX(1); } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 10px); } 12%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 0); } }
+[data-anim="1"] .r { animation: rise .55s var(--ease) both; animation-delay: calc(var(--i, 0) * 45ms); }
+[data-anim="page"] .pagewrap { animation: slideIn .45s var(--ease) both; }
+[data-anim="1"] .bar i, [data-anim="page"] .bar i { animation: grow 1s var(--ease) .2s both; }
+.sheet-wrap.new .scrim { animation: fade .3s var(--ease) both; }
+.sheet-wrap.new .sheet { animation: sheetUp .45s var(--ease) both; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* login */
+.login { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 76px 24px 34px; position: relative; overflow: hidden; }
+.ghost { position: absolute; right: -36px; top: 150px; font-family: var(--display); font-weight: 700; font-size: 200px; line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgba(43,182,115,0.2); pointer-events: none; user-select: none; }
+.brand { display: flex; flex-direction: column; gap: 22px; position: relative; }
+.mark { width: 64px; height: 64px; border-radius: 18px; background: var(--green-deep); border: 1px solid rgba(43,182,115,0.45); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 600; font-size: 17px; color: var(--gold); }
+.wordmark { margin: 0; font-family: var(--display); font-weight: 700; font-size: 50px; line-height: 0.92; letter-spacing: -0.04em; }
+.wordmark span { color: var(--gold); }
+.tagline { margin: 10px 0 0; font-size: 16px; line-height: 1.45; color: var(--text-2); max-width: 280px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--text-3); text-transform: uppercase; }
+.roles { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.role { display: flex; align-items: center; gap: 14px; min-height: 66px; padding: 12px 16px; border-radius: 16px; border: 1.5px solid var(--line-2); background: var(--bg-2); text-align: left; transition: border-color .3s var(--ease), background .3s var(--ease); }
+.role .rt { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.role .rn { font-size: 17px; font-weight: 600; }
+.role .rd { font-size: 13px; color: var(--text-2); }
+.radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); display: flex; align-items: center; justify-content: center; }
+.radio i { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); transform: scale(0); transition: transform .35s var(--ease-back); }
+.role[aria-checked="true"] { border-color: var(--gold); background: rgba(244,197,66,0.07); }
+.role[aria-checked="true"] .radio { border-color: var(--gold); }
+.role[aria-checked="true"] .radio i { transform: scale(1); }
+.hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-3); text-align: center; }
+
+/* buttons */
+.btn { min-height: 50px; border-radius: 14px; border: none; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; transition: transform .2s var(--ease), filter .2s var(--ease); }
+.btn:active { transform: scale(0.98); }
+.btn-light { background: #F1F3EF; color: #101411; min-height: 56px; font-size: 16px; }
+.btn-gold { background: var(--gold); color: var(--gold-ink); }
+.btn-green { background: var(--green); color: #04140C; }
+.btn-outline { background: transparent; border: 1.5px solid var(--line-2); }
+.btn-sm { min-height: 40px; border-radius: 11px; font-size: 13px; padding: 0 14px; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn { flex: 1; }
+
+/* header */
+.top { padding: 54px 20px 10px; display: flex; align-items: flex-end; gap: 10px; }
+@media (max-width: 960px) { .top { padding-top: calc(env(safe-area-inset-top) + 20px); } .pagebar { padding-top: calc(env(safe-area-inset-top) + 14px) !important; } }
+.top .tl { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.meta-row { display: flex; align-items: center; gap: 8px; }
+.date { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--text-3); }
+.event-chip { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; padding: 3px 7px; border-radius: 6px; background: var(--green-soft); color: var(--green-hi); }
+.title { margin: 0; font-family: var(--display); font-weight: 700; font-size: 32px; line-height: 1; letter-spacing: -0.035em; }
+.iconbtn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--bg-2); display: flex; align-items: center; justify-content: center; position: relative; color: var(--text-2); }
+.iconbtn .count { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--gold); color: var(--gold-ink); font-family: var(--mono); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.avatarbtn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(43,182,115,0.45); background: var(--green-deep); font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; padding: 0; }
+
+/* sub-tabs (level 2) */
+.subtabs { display: flex; gap: 4px; padding: 6px 14px 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; flex: none; }
+.subtabs::-webkit-scrollbar { display: none; }
+.subtab { position: relative; flex: none; min-height: 44px; padding: 0 12px; background: none; border: none; color: var(--text-3); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.subtab[aria-selected="true"] { color: var(--text); font-weight: 600; }
+.subtab[aria-selected="true"]::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--gold); animation: pop .35s var(--ease); }
+.subtab .n { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-left: 4px; }
+
+main { flex: 1; overflow-y: auto; padding: 16px 20px 28px; display: flex; flex-direction: column; gap: 22px; scrollbar-width: none; }
+main::-webkit-scrollbar { display: none; }
+
+/* page (level 3) */
+.pagewrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.pagebar { padding: 50px 12px 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--line); }
+.back { display: flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 10px 0 4px; background: none; border: none; color: var(--gold); font-size: 15px; font-weight: 500; }
+.pagebar .pt { flex: 1; text-align: center; font-size: 15px; font-weight: 600; margin-right: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* cards & lists */
+.hero { border-radius: 22px; background: var(--card); border: 1px solid var(--line); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.hero.green { background: var(--green-deep); border-color: rgba(43,182,115,0.35); }
+.k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--text-3); text-transform: uppercase; }
+.k.gold { color: var(--gold); } .k.green { color: var(--green-hi); }
+.h { font-family: var(--display); font-weight: 600; font-size: 22px; letter-spacing: -0.02em; }
+.sub { font-family: var(--mono); font-size: 13px; color: var(--text-2); }
+.big { font-family: var(--display); font-weight: 700; font-size: 54px; line-height: 0.88; letter-spacing: -0.045em; }
+.big.gold { color: var(--gold); }
+.note { font-size: 13px; color: var(--text-3); text-align: center; }
+.note.ok { color: var(--green-hi); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.note.ok::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+.stack { display: flex; flex-direction: column; gap: 5px; }
+.baseline { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; background: var(--gold); transform-origin: left; }
+.bar.green i { background: var(--green); }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.tile { border-radius: 16px; background: var(--card); border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.tile b { font-family: var(--display); font-size: 30px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.tile span { font-size: 12px; color: var(--text-2); }
+.tile.gold b { color: var(--gold); }
+.group { display: flex; flex-direction: column; gap: 10px; }
+.group-head { display: flex; align-items: baseline; justify-content: space-between; }
+.group h2, .group-head h2 { margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.12em; color: var(--text-3); text-transform: uppercase; }
+.link { background: none; border: none; padding: 6px 0; color: var(--gold); font-size: 13px; font-weight: 500; }
+.list { border-radius: 18px; background: var(--card); border: 1px solid var(--line); overflow: hidden; }
+.row { width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: none; border: none; text-align: left; transition: background .2s var(--ease); }
+.row + .row, .row + .rowx, .rowx + .row, .rowx + .rowx { border-top: 1px solid rgba(255,255,255,0.055); }
+.rowx { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.row:hover { background: var(--card-2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #3F4642; flex: none; }
+.txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ttl { font-size: 15px; font-weight: 500; }
+.mt { font-size: 13px; color: var(--text-2); }
+.chev { flex: none; color: #5F6662; display: flex; }
+
+/* chips/badges */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 500; padding: 4px 9px; border-radius: 8px; background: rgba(255,255,255,0.07); color: #C9CEC9; white-space: nowrap; }
+.chip.outline { background: none; border: 1px solid var(--line-2); color: var(--text-2); }
+.badge { flex: none; font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 8px; background: rgba(255,255,255,0.08); color: #C9CEC9; white-space: nowrap; }
+.t-gold.dot { background: var(--gold); } .t-gold.badge, .t-gold.chip { background: var(--gold-soft); color: var(--gold); }
+.t-green.dot { background: var(--green); } .t-green.badge, .t-green.chip { background: var(--green-soft); color: var(--green-hi); }
+.t-warn.dot { background: var(--warn); } .t-warn.badge, .t-warn.chip { background: var(--warn-soft); color: var(--warn); }
+.pts { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 8px; background: var(--gold-soft); color: var(--gold); flex: none; white-space: nowrap; }
+
+/* task card */
+.tcard { border-radius: 18px; background: var(--card); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 12px; text-align: left; width: 100%; transition: border-color .2s var(--ease), background .2s var(--ease); }
+.tcard:hover { border-color: var(--line-2); background: #171E1A; }
+.tcard .th { display: flex; align-items: flex-start; gap: 10px; }
+.tcard .tt { flex: 1; font-size: 16px; font-weight: 600; line-height: 1.3; }
+.tcard .td { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tcard .tf { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.tcard .stats { flex: 1; display: flex; justify-content: flex-end; gap: 10px; font-family: var(--mono); font-size: 12px; color: var(--text-2); align-items: center; }
+.tcard .stats span { display: inline-flex; align-items: center; gap: 4px; }
+.tcard-wrap { display: flex; flex-direction: column; }
+.tcard-wrap .joinbar { margin-top: -6px; border-radius: 0 0 18px 18px; background: var(--card); border: 1px solid var(--line); border-top: none; padding: 0 16px 14px; }
+.tcard-wrap.has-join .tcard { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
+.joinbtn { width: 100%; min-height: 40px; border-radius: 11px; border: 1px solid var(--line-2); background: none; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.joinbtn.gold { border-color: rgba(244,197,66,0.5); color: var(--gold); }
+.joinbtn.done { border-color: transparent; color: var(--green-hi); }
+.avs { display: flex; align-items: center; }
+.av { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--card); margin-left: -8px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--text); flex: none; }
+.avs .av:first-child { margin-left: 0; }
+.av.more { background: #222B26; color: var(--text-2); }
+.av.lg { width: 36px; height: 36px; font-size: 12px; margin-left: 0; border: none; }
+
+/* toolbar */
+.toolbar { display: flex; gap: 8px; align-items: center; overflow-x: auto; scrollbar-width: none; margin: -4px -20px 0; padding: 0 20px; }
+.toolbar::-webkit-scrollbar { display: none; }
+.fbtn { flex: none; min-height: 38px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 19px; border: 1px solid var(--line-2); background: var(--bg-2); font-size: 13px; font-weight: 500; }
+.fbtn.on { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+.fbtn .x { color: var(--text-3); }
+.search { flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--bg-2); padding: 0 14px; font-size: 15px; color: var(--text); }
+.search::placeholder { color: var(--text-3); }
+.count-line { font-size: 13px; color: var(--text-3); margin-top: -10px; }
+
+/* task detail */
+.dt-title { margin: 0; font-family: var(--display); font-size: 28px; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; }
+.desc { margin: 0; font-size: 15px; line-height: 1.55; color: var(--text-2); }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px; border-radius: 16px; overflow: hidden; background: var(--line); border: 1px solid var(--line); }
+.facts div { background: var(--card); padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; }
+.facts span { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text-3); text-transform: uppercase; }
+.facts b { font-size: 14px; font-weight: 500; }
+.steps { display: flex; gap: 4px; }
+.steps i { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); }
+.steps i.on { background: var(--green); }
+.steps i.cur { background: var(--gold); }
+.step-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+.mult { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.mult div { border-radius: 10px; background: rgba(0,0,0,0.25); padding: 8px 4px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.mult b { font-family: var(--mono); font-size: 14px; }
+.mult span { font-size: 10px; color: var(--text-2); }
+.mult .hit { background: var(--gold); color: var(--gold-ink); }
+.mult .hit span { color: var(--gold-ink); }
+.check { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; background: none; border: none; text-align: left; font-size: 14px; }
+.check + .check { border-top: 1px solid rgba(255,255,255,0.055); }
+.box { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--line-2); flex: none; display: flex; align-items: center; justify-content: center; transition: background .2s var(--ease), border-color .2s var(--ease); }
+.check[aria-checked="true"] .box { background: var(--green); border-color: var(--green); color: #04140C; }
+.check[aria-checked="true"] .cl { color: var(--text-3); text-decoration: line-through; }
+.files { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.file { aspect-ratio: 1; border-radius: 12px; background: #1C2420; border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: var(--text-2); padding: 6px; text-align: center; }
+.file.add { border-style: dashed; border-color: var(--line-2); background: none; color: var(--gold); }
+.comment { display: flex; gap: 10px; }
+.bubble { flex: 1; border-radius: 4px 14px 14px 14px; background: var(--card); border: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.bubble .who { font-size: 13px; font-weight: 600; }
+.bubble .who span { font-weight: 400; color: var(--text-3); margin-left: 6px; font-size: 12px; }
+.bubble p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--text-2); }
+.composer { display: flex; gap: 8px; align-items: center; }
+.activity { display: flex; flex-direction: column; gap: 10px; padding-left: 4px; }
+.activity div { display: flex; gap: 10px; font-size: 13px; color: var(--text-2); line-height: 1.4; }
+.activity div::before { content: ''; width: 6px; height: 6px; margin-top: 7px; border-radius: 50%; background: #3F4642; flex: none; }
+.activity b { color: var(--text); font-weight: 500; }
+.activity span { color: var(--text-3); }
+
+/* leaderboard */
+.seg { display: flex; padding: 3px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line); }
+.seg button { flex: 1; min-height: 36px; border-radius: 9px; border: none; background: none; font-size: 13px; font-weight: 500; color: var(--text-3); }
+.seg button[aria-pressed="true"] { background: var(--card-2); color: var(--text); }
+.podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 8px; align-items: end; }
+.pod { border-radius: 16px; background: var(--card); border: 1px solid var(--line); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.pod.first { background: var(--green-deep); border-color: rgba(43,182,115,0.35); padding-top: 20px; padding-bottom: 20px; }
+.pod .place { font-family: var(--mono); font-size: 11px; color: var(--gold); letter-spacing: 0.1em; }
+.pod .nm { font-size: 13px; font-weight: 600; }
+.pod .ps { font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--gold); }
+.rank { font-family: var(--mono); font-size: 13px; color: var(--text-3); width: 22px; flex: none; }
+.standing { display: grid; grid-template-columns: 96px 1fr 40px; gap: 10px; align-items: center; font-size: 13px; padding: 6px 0; }
+.standing .bar { height: 6px; }
+.standing b { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--text-2); font-weight: 500; }
+
+/* orders */
+.ocard { border-radius: 18px; background: var(--card); border: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.ocard .oh { display: flex; gap: 10px; align-items: flex-start; }
+.ocard .on { flex: 1; font-size: 15px; font-weight: 600; line-height: 1.3; }
+.ocard .price { font-family: var(--mono); font-size: 15px; font-weight: 600; }
+.ocard .om { font-size: 13px; color: var(--text-2); }
+
+/* sheet */
+.sheet-wrap { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; }
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); border: none; padding: 0; cursor: default; }
+.sheet { position: relative; max-height: 86%; display: flex; flex-direction: column; background: var(--bg-2); border-top: 1px solid var(--line-2); border-radius: 26px 26px 0 0; }
+.sheet .handle { width: 40px; height: 5px; border-radius: 3px; background: var(--line-2); margin: 10px auto 4px; flex: none; }
+.sheet .sh { display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 10px; }
+.sheet .sh h2 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.sheet .sb { overflow-y: auto; padding: 4px 20px 16px; display: flex; flex-direction: column; gap: 18px; }
+.sheet .sf { padding: 12px 20px 30px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
+.sheet .sf .btn { flex: 1; }
+.opt { min-height: 38px; padding: 0 13px; border-radius: 19px; border: 1px solid var(--line-2); background: none; font-size: 13px; font-weight: 500; }
+.opt[aria-pressed="true"] { border-color: var(--gold); background: var(--gold-soft); color: var(--gold); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.field input, .field select, .field textarea { min-height: 46px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--card); padding: 10px 14px; font-size: 15px; color: var(--text); }
+.field textarea { min-height: 80px; resize: none; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* toast */
+.toast { position: absolute; left: 50%; bottom: 104px; z-index: 30; padding: 12px 16px; border-radius: 14px; background: #F1F3EF; color: #101411; font-size: 14px; font-weight: 500; white-space: nowrap; animation: toast 2.4s var(--ease) both; pointer-events: none; }
+
+/* tab bar (level 1) */
+.tabs { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 2px; padding: 8px 8px 26px; background: var(--bg-2); border-top: 1px solid var(--line); flex: none; }
+@media (max-width: 960px) { .tabs { padding-bottom: calc(env(safe-area-inset-bottom) + 10px); } }
+.tab { min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: none; border: none; color: var(--text-3); font-size: 11px; font-weight: 500; padding: 4px 0; }
+.tab .pill { width: 54px; height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: center; transition: background .3s var(--ease); }
+.tab[aria-current="page"] { color: var(--gold); font-weight: 600; }
+.tab[aria-current="page"] .pill { background: var(--gold-soft); }
+svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* ================= v4 · soft ================= */
+main > *, .sheet .sb > * { flex-shrink: 0; }
+body { background: #E9E5DB; }
+.phone {
+  background:
+    radial-gradient(110% 55% at 0% 0%, rgba(242,184,31,0.22), transparent 60%),
+    radial-gradient(90% 45% at 100% 30%, rgba(31,157,87,0.13), transparent 60%),
+    radial-gradient(80% 40% at 30% 100%, rgba(242,184,31,0.12), transparent 60%),
+    #F6F4EF;
+  border: none;
+  box-shadow: 0 0 0 10px #1A1D1B, 0 0 0 11px #3A3F3C, 0 40px 100px rgba(60,45,10,0.28);
+}
+@media (max-width: 960px) { .phone { box-shadow: none; } }
+.side h1 { letter-spacing: -0.04em; font-weight: 800; }
+.kicker { letter-spacing: 0.04em; color: var(--green-hi); font-weight: 700; }
+.side .label { letter-spacing: 0.02em; text-transform: none; font-size: 13px; font-weight: 600; }
+.level b { background: var(--gold-soft); color: var(--gold-text); font-weight: 700; }
+.jump button { background: #fff; border: none; box-shadow: var(--shadow); }
+.jump button[aria-pressed="true"] { background: var(--text); color: #fff; }
+.switch .track { background: rgba(22,32,27,0.15); }
+.switch .knob { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+/* type */
+.title { font-size: 34px; font-weight: 800; letter-spacing: -0.035em; }
+.k, .date, .eyebrow, .facts span { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 500; color: var(--text-3); }
+.group h2, .group-head h2 { text-transform: none; letter-spacing: -0.02em; font-size: 20px; font-weight: 700; color: var(--text); }
+.h, .dt-title { font-weight: 800; letter-spacing: -0.03em; }
+.big { font-weight: 800; letter-spacing: -0.04em; }
+.sub { font-size: 14px; }
+.count-line { color: var(--text-3); }
+
+/* surfaces */
+.hero, .list, .ocard, .tile, .pod, .bubble, .tcard-wrap, .streak { background: #fff; border: none; box-shadow: var(--shadow); border-radius: 24px; }
+.list { border-radius: 22px; }
+.row + .row, .row + .rowx, .rowx + .row, .rowx + .rowx { border-top: 1px solid var(--line); }
+.row:hover { background: #FAF9F6; }
+.dot { background: #CBD0CC; }
+.chip, .badge { background: #F1EFE9; color: #47514B; }
+.chip.outline { background: none; border-color: var(--line-2); color: var(--text-2); }
+.t-gold.dot { background: var(--gold); } .t-gold.badge, .t-gold.chip { background: var(--gold-soft); color: var(--gold-text); }
+.t-green.dot { background: var(--green); } .t-green.badge, .t-green.chip { background: var(--green-soft); color: var(--green-hi); }
+.t-warn.dot { background: #E5533D; } .t-warn.badge, .t-warn.chip { background: var(--warn-soft); color: var(--warn); }
+.pts { background: var(--gold-soft); color: var(--gold-text); font-weight: 700; border-radius: 999px; padding: 4px 10px; }
+.k.gold, .big.gold { color: var(--gold-text); }
+.tile.gold b { color: var(--gold-text); }
+.event-chip { background: var(--green-soft); color: var(--green-hi); font-family: var(--body); letter-spacing: 0; font-size: 11px; border-radius: 999px; padding: 3px 9px; }
+.bar { background: rgba(22,32,27,0.07); }
+.bar i { background: var(--green); }
+.steps i { background: rgba(22,32,27,0.09); }
+.mult div { background: rgba(22,32,27,0.05); }
+.mult .hit { background: var(--gold); color: var(--gold-ink); }
+.file { background: #F1EFE9; border: none; }
+.file.add { background: none; border: 1.5px dashed var(--line-2); color: var(--green-hi); }
+.check[aria-checked="true"] .box { background: var(--green); border-color: var(--green); color: #fff; }
+.activity div::before { background: #C9CEC9; }
+.facts { background: var(--line); border: none; box-shadow: var(--shadow); border-radius: 20px; }
+.av { color: #fff; border-color: #fff; }
+.av.more { background: #EEEBE3; color: var(--text-2); }
+
+/* buttons */
+.btn { border-radius: 999px; min-height: 52px; }
+.btn-sm { min-height: 40px; }
+.btn-gold { background: var(--text); color: #fff; }
+.btn-green { background: var(--green); color: #fff; }
+.btn-outline { background: #fff; border: 1.5px solid var(--line-2); color: var(--text); }
+.btn-light { background: var(--text); color: #fff; }
+.link { color: var(--green-hi); font-weight: 600; }
+.iconbtn { background: #fff; border: none; box-shadow: var(--shadow); color: var(--text); }
+.iconbtn .count { background: #E5533D; color: #fff; font-family: var(--body); font-weight: 700; }
+.avatarbtn { background: var(--green); border: 3px solid #fff; color: #fff; box-shadow: var(--shadow); font-weight: 700; }
+
+/* header */
+.top { padding-top: 56px; padding-bottom: 12px; }
+.top.home { align-items: center; gap: 12px; }
+.top.home .tl { gap: 2px; }
+.top.home .avatarbtn { width: 50px; height: 50px; }
+.greet { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+
+/* sub-tabs as pills */
+.subtabs { border-bottom: none; padding: 4px 20px 6px; gap: 8px; }
+.subtab { min-height: 44px; padding: 0 18px; border-radius: 999px; background: #fff; color: var(--text-2); box-shadow: 0 1px 2px rgba(40,32,12,0.05); font-weight: 600; }
+.subtab[aria-selected="true"] { background: var(--text); color: #fff; }
+.subtab[aria-selected="true"]::after { display: none; }
+.subtab .n { color: inherit; opacity: 0.55; font-family: var(--body); }
+
+/* floating tab bar + action button */
+.tabs { display: flex; align-items: center; gap: 10px; padding: 8px 14px 22px; background: transparent; border-top: none; }
+.tabpill { flex: 1; min-width: 0; display: flex; gap: 2px; padding: 5px; border-radius: 999px; background: var(--text); box-shadow: 0 12px 30px rgba(22,32,27,0.28); }
+.tab { flex: 1; min-width: 0; min-height: 54px; border-radius: 999px; color: rgba(255,255,255,0.62); font-size: 10.5px; font-weight: 600; gap: 3px; transition: background .3s var(--ease), color .3s var(--ease); }
+.tab svg.i { width: 20px; height: 20px; }
+.tab[aria-current="page"] { background: #fff; color: var(--text); }
+.tab:hover { color: #fff; }
+.tab[aria-current="page"]:hover { color: var(--text); }
+.fab { width: 60px; height: 60px; flex: none; border-radius: 50%; border: none; background: var(--gold); color: var(--gold-ink); display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 26px rgba(242,184,31,0.5); transition: transform .25s var(--ease-back); }
+.fab:active { transform: scale(0.92); }
+.fab svg.i { stroke-width: 2.4; }
+
+/* page bar */
+.pagebar { border-bottom: none; padding-top: 52px; }
+.back { color: var(--text); font-weight: 600; background: #fff; border-radius: 999px; box-shadow: var(--shadow); padding: 0 14px 0 8px; }
+
+/* toolbars, search, segs, sheets */
+.fbtn { background: #fff; border: none; box-shadow: 0 1px 2px rgba(40,32,12,0.06); font-weight: 600; color: var(--text-2); }
+.fbtn.on { background: var(--text); color: #fff; }
+.fbtn .n { margin-left: 4px; opacity: 0.55; }
+.search { background: #fff; border: none; border-radius: 999px; box-shadow: var(--shadow); padding: 0 18px; }
+.seg { background: #ECE9E1; border: none; border-radius: 999px; }
+.seg button { border-radius: 999px; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.scrim { background: rgba(22,32,27,0.35); }
+.sheet { background: #FBFAF7; border-top: none; border-radius: 30px 30px 0 0; }
+.sheet .sh h2 { font-weight: 800; }
+.opt { background: #fff; border: 1px solid var(--line-2); font-weight: 600; }
+.opt[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: #fff; }
+.field input, .field select, .field textarea { background: #fff; border: 1px solid var(--line-2); border-radius: 16px; }
+.toast { background: var(--text); color: #fff; border-radius: 999px; }
+
+/* login */
+.mark { background: var(--green); border: none; color: #fff; border-radius: 22px; box-shadow: 0 10px 24px rgba(31,157,87,0.35); }
+.ghost { -webkit-text-stroke: 1.5px rgba(31,157,87,0.16); }
+.wordmark { font-weight: 800; }
+.role { background: #fff; border: 2px solid transparent; box-shadow: var(--shadow); border-radius: 20px; }
+.role[aria-checked="true"] { border-color: var(--green); background: #fff; }
+.role[aria-checked="true"] .radio { border-color: var(--green); }
+.radio i { background: var(--green); }
+.eyebrow { font-weight: 600; }
+
+/* task cards */
+.tcard-wrap { overflow: hidden; }
+.tcard { background: transparent; border: none; border-radius: 0; }
+.tcard:hover { background: #FAF9F6; border-color: transparent; }
+.tcard .tt { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.tcard .tf { border-top-color: var(--line); }
+.tcard .stats { font-family: var(--body); }
+.tcard-wrap .joinbar { background: transparent; border: none; margin-top: 0; padding-top: 0; }
+.joinbtn { border-radius: 999px; border-color: var(--line-2); font-weight: 600; }
+.joinbtn.gold { border-color: rgba(31,157,87,0.45); color: var(--green-hi); }
+.joinbtn.done { color: var(--green-hi); }
+.taskbar { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.taskbar .bar { flex: 1; height: 6px; }
+
+/* green hero (event + scouting) */
+.hero.green { background: linear-gradient(145deg, #24A862, #147A43); color: #fff; }
+.hero.green .k, .hero.green .k.gold, .hero.green .sub, .hero.green .big, .hero.green .big.gold, .hero.green span { color: #fff !important; }
+.hero.green .btn-gold { background: #fff; color: var(--text); }
+.hero.green .note.ok::before { background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,0.25); }
+
+/* podium */
+.pod.first { background: var(--text); color: #fff; }
+.pod.first .nm, .pod.first .mt { color: #fff !important; }
+.pod.first .ps { color: var(--gold); }
+.pod .ps { color: var(--gold-text); font-family: var(--display); font-weight: 800; }
+.pod .place { color: var(--gold-text); font-family: var(--body); font-weight: 700; }
+.rank { font-family: var(--body); font-weight: 700; }
+
+/* insight cards (the orange cards in the reference, in our green and gold) */
+.insight { position: relative; overflow: hidden; border-radius: 28px; padding: 18px; display: flex; flex-direction: column; gap: 14px; color: #fff; background: linear-gradient(145deg, #27AB64 0%, #158047 100%); box-shadow: 0 16px 34px rgba(21,128,71,0.28); }
+.insight.gold { color: var(--gold-ink); background: linear-gradient(145deg, #F7C843 0%, #EFA91A 100%); box-shadow: 0 16px 34px rgba(239,169,26,0.3); }
+.insight .tag { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 999px; background: rgba(255,255,255,0.2); }
+.insight.gold .tag { background: rgba(42,30,0,0.08); }
+.insight h3 { margin: 0; max-width: 212px; font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1.05; letter-spacing: -0.035em; position: relative; }
+.insight p { margin: -4px 0 0; max-width: 250px; font-size: 14px; line-height: 1.45; opacity: 0.92; position: relative; }
+.insight .art { position: absolute; right: -14px; top: -10px; width: 130px; height: 130px; }
+.insight .bar2 { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 6px 6px 18px; border-radius: 999px; background: #fff; color: var(--text); font-size: 14px; font-weight: 600; }
+.insight .bar2 .btn { min-height: 44px; padding: 0 20px; background: var(--text); color: #fff; font-size: 14px; }
+.ticon { width: 46px; height: 46px; flex: none; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: var(--green-deep); color: var(--green-hi); }
+.ticon.gold { background: var(--gold-soft); color: var(--gold-text); }
+.ticon.warn { background: var(--warn-soft); color: var(--warn); }
+.when { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; font-size: 14px; font-weight: 600; }
+.when span { font-size: 12px; font-weight: 500; color: var(--text-3); }
+.rings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rtile { background: #fff; border: none; border-radius: 22px; box-shadow: var(--shadow); padding: 14px 6px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.rtile .rw { position: relative; width: 66px; height: 66px; }
+.rtile svg { width: 66px; height: 66px; display: block; }
+.rtile circle { fill: none; stroke-width: 6; stroke-linecap: round; }
+.rtile .rt { stroke: rgba(22,32,27,0.07); }
+.rtile .rc { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+[data-anim="1"] .rtile .rf, [data-anim="page"] .rtile .rf { animation: ringIn 1.2s var(--ease) .2s both; }
+@keyframes ringIn { from { stroke-dasharray: 0 200; } }
+.rtile span { font-size: 13px; color: var(--text-2); }
+.rtile span b { color: var(--text); font-weight: 800; }
+
+/* gauge */
+.gauge { position: relative; display: flex; justify-content: center; margin-top: 4px; }
+.gauge svg { width: 100%; max-width: 280px; display: block; }
+.gv { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.gv span { font-size: 13px; color: var(--text-3); }
+.gv b { font-family: var(--display); font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; font-size: 13px; color: var(--text-2); }
+.legend b { color: var(--text); font-weight: 700; }
+.legend i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; margin-right: 7px; vertical-align: middle; }
+
+/* inventory */
+.invmeta { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-3); margin-top: -8px; }
+.sync { display: inline-flex; align-items: center; gap: 6px; color: var(--green-hi); font-weight: 600; }
+.sync::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.searchrow { display: flex; gap: 10px; align-items: center; }
+.searchrow .iconbtn { width: 48px; height: 48px; flex: none; }
+.lowrow { display: flex; gap: 10px; overflow-x: auto; margin: 0 -20px; padding: 2px 20px 10px; scrollbar-width: none; }
+.lowrow::-webkit-scrollbar { display: none; }
+.lowcard { flex: none; width: 220px; display: flex; align-items: center; gap: 10px; padding: 10px; border: none; border-radius: 20px; background: #fff; box-shadow: var(--shadow); text-align: left; }
+.lowcard .thumb { width: 56px; height: 56px; flex: none; border-radius: 15px; background: #F1EFE9; display: flex; align-items: center; justify-content: center; }
+.lowcard b { display: block; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.lowcard .lw { font-size: 12px; font-weight: 600; color: var(--warn); }
+.pgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ptile { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: none; border-radius: 24px; background: #fff; box-shadow: var(--shadow); text-align: left; transition: transform .25s var(--ease); }
+.ptile:active { transform: scale(0.98); }
+.ptile .img { position: relative; aspect-ratio: 1.1; border-radius: 18px; background: #F1EFE9; display: flex; align-items: center; justify-content: center; }
+.qty { position: absolute; top: 8px; left: 8px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; background: #fff; font-size: 12px; font-weight: 700; color: var(--text); }
+.qty i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.qty.low i { background: #EFA91A; }
+.qty.out { background: #E5533D; color: #fff; }
+.qty.out i { background: #fff; }
+.ptile .pn { padding: 2px 6px 0; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.ptile .pp { padding: 0 6px 6px; font-size: 12px; color: var(--text-3); }
+.pimg { position: relative; height: 230px; border-radius: 28px; background: #fff; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; }
+.pimg .photos { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; background: rgba(22,32,27,0.78); color: #fff; font-size: 12px; font-weight: 600; }
+.catlbl { font-size: 13px; font-weight: 700; color: var(--green-hi); }
+.stock { background: #fff; border-radius: 24px; box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.stock .num { font-family: var(--display); font-size: 50px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+.stock .num small { font-size: 16px; font-weight: 600; color: var(--text-3); letter-spacing: 0; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button { width: 46px; height: 46px; border: none; border-radius: 50%; background: #F1EFE9; font-size: 20px; font-weight: 700; color: var(--text); }
+.stepper .one { width: auto; padding: 0 16px; border-radius: 999px; font-size: 14px; background: var(--text); color: #fff; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; }
+.status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.acc { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 18px; background: #F1EFE9; }
+.acc button { min-height: 42px; border: none; border-radius: 14px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.acc button i { width: 7px; height: 7px; border-radius: 50%; }
+.acc button[aria-pressed="true"] { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.qa { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.qa button { min-height: 108px; border: none; border-radius: 22px; background: #fff; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 14px; text-align: left; font-size: 15px; font-weight: 700; }
+.qa button span { font-size: 12px; font-weight: 500; color: var(--text-3); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <aside class="side" aria-label="Prototype controls">
+    <div>
+      <div class="kicker">FRC TEAM 5829 · PROTOTYPE V4 · SOFT</div>
+      <h1>Awtybots<br>team app</h1>
+    </div>
+    <div>
+      <div class="label">HOW IT'S ORGANIZED</div>
+      <div class="levels">
+        <div class="level"><b>1</b><span><strong>Bottom tabs</strong> are the big sections: Home, Tasks, Comp, Shop, Team.</span></div>
+        <div class="level"><b>2</b><span><strong>Top tabs</strong> split a section into views, like Board · Mine · Up for grabs · Leaderboard.</span></div>
+        <div class="level"><b>3</b><span><strong>Pages</strong> slide in when you tap something, like a task with its files, comments and points.</span></div>
+        <div class="level"><b>+</b><span><strong>Sheets</strong> slide up for filters and forms, like Filters or New order.</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="label">JUMP TO</div>
+      <div class="jump" id="jump">
+        <button type="button" data-action="jump" data-role="login">Sign-in</button>
+        <button type="button" data-action="jump" data-role="student">Student lead</button>
+        <button type="button" data-action="jump" data-role="parent">Parent</button>
+        <button type="button" data-action="jump" data-role="mentor">Mentor</button>
+      </div>
+    </div>
+    <button type="button" class="switch" role="switch" aria-checked="false" id="compSwitch" data-action="comp">
+      <span class="track"><span class="knob"></span></span>
+      Event mode (competition day)
+    </button>
+    <p>New in v4: a light, soft look in green and gold, pill tabs, a floating tab bar with a gold quick-action button, and Shop › Inventory rebuilt from the team inventory app.</p>
+    <p>Sample data only. Nothing saves; buttons switch screens.</p>
+  </aside>
+  <div class="phone">
+    <div id="app" data-anim="1"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- icons ---------------- */
+const ICONS = {
+  home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  tasks: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/>',
+  comp: '<path d="M8 21h8M12 16v5M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+  shop: '<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/>',
+  team: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14a6.5 6.5 0 0 1 3.5 6"/>',
+  me: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  volunteer: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  admin: '<path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  chev: '<path d="m9 6 6 6-6 6"/>',
+  back: '<path d="m15 6-6 6 6 6"/>',
+  filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+  clip: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4L15.5 7"/>',
+  chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/>',
+  check: '<path d="m5 12 5 5 9-10"/>',
+  join: '<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
+  scan: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/>',
+  enter: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/>',
+  send: '<path d="M4 12 20 4l-6 16-3-7z"/>'
+};
+const icon = (n, s) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${s ? ` style="width:${s}px;height:${s}px"` : ''}>${ICONS[n]}</svg>`;
+
+/* ---------------- sample data ---------------- */
+const MEMBERS = [
+  { n: 'Sam Rivera', i: 'SR', role: 'Subteam lead', team: 'Electrical', open: 5, done: 22, pts: 142, you: true },
+  { n: 'Maya Chen', i: 'MC', role: 'Member', team: 'CAD / Design', open: 2, done: 20, pts: 131 },
+  { n: 'Leo Park', i: 'LP', role: 'Subteam lead', team: 'Mechanical', open: 2, done: 13, pts: 119 },
+  { n: 'Priya Shah', i: 'PS', role: 'Member', team: 'Programming', open: 5, done: 13, pts: 88 },
+  { n: 'Diego Ruiz', i: 'DR', role: 'Member', team: 'Fabrication', open: 2, done: 9, pts: 84 },
+  { n: 'Ava Johnson', i: 'AJ', role: 'Subteam lead', team: 'Media', open: 2, done: 5, pts: 61 },
+  { n: 'Noah Kim', i: 'NK', role: 'Member', team: 'Programming', open: 3, done: 5, pts: 47 },
+  { n: 'Zoe Martin', i: 'ZM', role: 'Subteam lead', team: 'Awards', open: 2, done: 2, pts: 38 },
+  { n: 'Kai Thompson', i: 'KT', role: 'Subteam lead', team: 'Scouting', open: 2, done: 1, pts: 16 },
+  { n: 'Coach Lee', i: 'CL', role: 'Admin', team: 'Mentors', open: 0, done: 3, pts: 0 }
+];
+const byI = Object.fromEntries(MEMBERS.map(m => [m.i, m]));
+const AVC = ['#1F5A3F', '#5A4A1A', '#24443A', '#47401F', '#2A4F5A', '#4A2F3A', '#36502A'];
+const avColor = (s) => AVC[(s.charCodeAt(0) + s.charCodeAt(1)) % AVC.length];
+
+const STATUS = { todo: ['To do', ''], progress: ['In progress', 'green'], look: ['Needs a look', 'warn'], review: ['In review', 'gold'], done: ['Done', 'green'] };
+const PRIO = { low: ['Low', ''], medium: ['Medium', ''], high: ['High', 'gold'], critical: ['Critical', 'warn'] };
+const PRIO_N = { low: 1, medium: 2, high: 3, critical: 4 };
+const DIFF_N = { 'Easy': 1, 'Semi-difficult': 2, 'Difficult': 3, 'Extra difficult': 4 };
+
+const TASKS = [
+  { id: 't1', title: 'Design and build a driver station', pts: 8, desc: 'Holds the laptop, charger and 2 controllers, with handles so one person can carry it. Mounts to the old robot cart or sits on the new cart.', status: 'progress', prio: 'high', diff: 'Difficult', team: 'CAD / Design', robot: 'No robot', due: 'Dec 18', days: 24, people: ['SR', 'MC', 'LP', 'DR', 'AJ', 'NK', 'PS'], cap: 11, by: 'Coach Lee',
+    checklist: [['CAD the frame', 1], ['Cable holes at the back', 1], ['Handle placement', 1], ['Laptop tray', 1], ['Controller holders', 1], ['Mount to robot cart', 0], ['Cut parts', 0], ['Assemble', 0]], files: 2,
+    comments: [['CL', 'Coach Lee', '2 weeks ago', 'The cables need to come up into the laptop from under the station, not just out the side.'], ['MC', 'Maya Chen', '2 weeks ago', 'Added holes at the back for ethernet and power. Updated CAD is attached.'], ['CL', 'Coach Lee', '3 weeks ago', 'When you submit, upload a screenshot or link so it can be reviewed.']] },
+  { id: 't2', title: 'Inventory the Husky drawers', pts: 8, desc: 'Label and count everything in the tool chest so we know where things are at competitions.', status: 'progress', prio: 'high', diff: 'Difficult', team: 'No subteam', robot: 'No robot', due: 'Dec 18', days: 24, people: ['SR', 'DR', 'ZM', 'KT'], cap: 8, by: 'Coach Lee', checklist: [['Empty and sort top drawers', 1], ['Label drawers', 0], ['Enter counts into Inventory', 0]], files: 0, comments: [] },
+  { id: 't3', title: 'Build a mini super pit', pts: 10, desc: 'A compact pit setup we can use for off-season events. Should fold flat for the trailer.', status: 'progress', prio: 'high', diff: 'Extra difficult', team: 'Fabrication', robot: 'No robot', due: 'Dec 18', days: 24, people: ['SR', 'DR', 'MC', 'LP', 'PS'], cap: 8, by: 'Coach Lee', checklist: [['Design', 1], ['Buy wood', 1], ['Cut panels', 1], ['Hinges', 0]], files: 4, comments: [['DR', 'Diego Ruiz', '3 days ago', 'Panels are cut. Waiting on hinges from the order.']] },
+  { id: 't4', title: 'Organize the parts cabinet', pts: 8, desc: 'Sort the cabinet and corner so we know what we have before build season.', status: 'look', prio: 'critical', diff: 'Difficult', team: 'No subteam', robot: 'No robot', due: 'Dec 18', days: 24, people: ['SR', 'KT', 'ZM'], cap: 10, by: 'Coach Lee', checklist: [], files: 1, comments: [] },
+  { id: 't5', title: 'Wire CAN bus to the pivot', pts: 5, desc: 'Run CAN from the PDH to both pivot motor controllers and test with the practice bot.', status: 'review', prio: 'medium', diff: 'Semi-difficult', team: 'Electrical', robot: 'PracticeBot', due: 'Dec 2', days: 8, people: ['SR', 'NK'], cap: 3, by: 'Sam Rivera', checklist: [['Crimp connectors', 1], ['Route wires', 1], ['Test in Phoenix Tuner', 1]], files: 3, comments: [] },
+  { id: 't6', title: 'Final impact video', pts: 5, desc: 'Post it in the Discord when it is ready for review. Include all changes and updates.', status: 'todo', prio: 'critical', diff: 'Semi-difficult', team: 'Awards', robot: 'No robot', due: 'Nov 30', days: 6, people: ['ZM', 'AJ'], cap: 2, by: 'Zoe Martin', checklist: [], files: 0, comments: [] },
+  { id: 't7', title: 'Tune pose estimation', pts: 3, desc: 'Reduce jitter in our pose estimate.', status: 'progress', prio: 'low', diff: 'Easy', team: 'Programming', robot: 'PracticeBot', due: 'Dec 18', days: 24, people: ['PS'], cap: 2, by: 'Coach Lee', checklist: [['Log raw vision data', 0], ['Tune std devs', 0]], files: 0, comments: [] },
+  { id: 't8', title: 'LED robot status lights', pts: 3, desc: 'Use LEDs to show robot state to the human player.', status: 'todo', prio: 'low', diff: 'Easy', team: 'Programming', robot: 'PracticeBot', due: 'Dec 18', days: 24, people: ['NK', 'PS'], cap: 3, by: 'Coach Lee', checklist: [], files: 0, comments: [] },
+  { id: 't9', title: 'Learn Commands v3', pts: 5, desc: 'Every programmer needs to write commands in v3 before the 2027 season. Watch the videos, then message the programming mentor.', status: 'todo', prio: 'high', diff: 'Semi-difficult', team: 'Programming', robot: 'PracticeBot', due: 'Dec 31', days: 37, people: ['PS', 'NK'], cap: 3, by: 'Coach Lee', checklist: [], files: 0, comments: [] },
+  { id: 't10', title: '3 mini essays for Impact', pts: 3, desc: 'Impact topics are out.', status: 'todo', prio: 'medium', diff: 'Easy', team: 'Awards', robot: 'No robot', due: 'Jan 9', days: 46, people: ['ZM'], cap: 1, by: 'Zoe Martin', checklist: [], files: 0, comments: [] },
+  { id: 't11', title: 'Clean the practice room', pts: 2, desc: 'Before the holiday break.', status: 'done', prio: 'low', diff: 'Easy', team: 'No subteam', robot: 'No robot', due: 'Nov 14', days: -10, people: ['SR', 'LP', 'AJ'], cap: 6, by: 'Coach Lee', checklist: [], files: 0, comments: [] }
+];
+const taskById = (id) => TASKS.find(t => t.id === id);
+const isMine = (t) => t.people.includes('SR');
+
+const ORDER_STEPS = ['Requested', 'Approved', 'Placed', 'Shipped', 'Received'];
+const ORDERS = [
+  { id: 'o1', name: '2-pin to 3-pin connectors (8-pack)', price: 9.99, qty: 3, vendor: 'REV Robotics', by: 'SR', when: '18 hours ago', step: 0, note: 'For the new controller. 2 or 3 packs should last the season.' },
+  { id: 'o4', name: 'Motor controllers', price: 89.99, qty: 2, vendor: 'CTRE', by: 'LP', when: '1 day ago', step: 0, note: 'Spares for the swerve modules.' },
+  { id: 'o2', name: 'Colored zip ties', price: 45.0, qty: 1, vendor: 'Amazon', by: 'SR', when: '2 weeks ago', step: 1, note: '' },
+  { id: 'o3', name: 'Zip tie mounts', price: 4.1, qty: 2, vendor: 'McMaster-Carr', by: 'SR', when: 'last week', step: 2, note: '' },
+  { id: 'o5', name: 'Polycarbonate sheet, 1/8 in', price: 38.5, qty: 1, vendor: 'McMaster-Carr', by: 'MC', when: '5 days ago', step: 3, note: '' },
+  { id: 'o6', name: 'Flanged bearings (10)', price: 12.0, qty: 2, vendor: 'WCP', by: 'DR', when: '3 weeks ago', step: 4, note: '' }
+];
+const VENDORS = ['AndyMark', 'Amazon', 'CTRE', 'Limelight', 'McMaster-Carr', 'REV Robotics', 'ThriftyBot', 'VEX', 'WCP', 'Other'];
+
+const INVENTORY = [
+  ['10-32 nylock nuts', 'Bin C4', 14, 'Hardware', true],
+  ['Zip ties, 8 in', 'Drawer A2', 30, 'Electrical', true],
+  ['NEO Vortex motor', 'Shelf M1', 6, 'Motors', false],
+  ['Kraken X60', 'Shelf M1', 4, 'Motors', false],
+  ['WAGO 221 connectors', 'Drawer E3', 48, 'Electrical', false],
+  ['1/2 in hex shaft, 36 in', 'Rack S2', 3, 'Stock', true],
+  ['Polycarbonate 1/8 in', 'Rack S1', 2, 'Stock', false],
+  ['SDS MK4i module', 'Shelf D1', 5, 'Drivetrain', false]
+];
+const BATTERIES = [
+  ['B07', 'Ready', 'green', '13.1 V', 41, 'Charged · on the cart'],
+  ['B03', 'Charging', 'gold', '12.4 V', 66, 'On charger 2'],
+  ['B11', 'Ready', 'green', '13.0 V', 18, 'Charged · in the pit box'],
+  ['B02', 'Check', 'warn', '12.1 V', 104, 'Past 100 cycles'],
+  ['B05', 'Retired', '', '—', 131, 'Practice use only']
+];
+
+/* generic list sections: [title, meta, badge, tone] */
+const GENERIC = {
+  comp: {
+    pit: [{ label: 'Pit scouting', items: [['Teams left to visit', '12 of 40 done', '28 left', 'warn'], ['Your list', '5 teams assigned to you', '2 done', 'gold']] }, { label: 'Done', items: [['254 · Swerve, turret shooter', 'By Kai Thompson · 2 photos', '', 'green'], ['1678 · Swerve, climber', 'By Noah Kim · 3 photos', '', 'green']] }],
+    data: [{ label: 'Top teams by avg points', items: [['254', 'Avg 58 pts · climbs 90%', '1st', 'gold'], ['1678', 'Avg 54 pts · climbs 85%', '2nd', ''], ['5829 (us)', 'Avg 41 pts · climbs 70%', '8th', 'green']] }, { label: 'Views', items: [['Team comparison', 'Pick 2–6 teams side by side', '', ''], ['Match predictions', 'Built from scouting data', '', ''], ['Pick list', 'Drag to rank · shared with drive team', 'Draft', 'gold']] }],
+    schedule: [{ label: 'Our matches', items: [['Qual 14 · Red', '11:42 AM · with 1234, 4567', 'Next', 'gold'], ['Qual 27 · Blue', '1:15 PM', '', ''], ['Qual 39 · Red', '3:02 PM', '', '']] }, { label: 'Event', items: [['Week 0 scrimmage', 'Sat Feb 21 · [VENUE]', '', '']] }]
+  },
+  admin: {
+    people: [{ label: 'Waiting for approval', items: [['Ethan Wu', 'Signed in as Student · school account', 'Approve', 'gold'], ['Jordan Rivera', 'Signed in as Parent · link to Sam Rivera?', 'Approve', 'gold'], ['Pat Morgan', 'Signed in as Mentor', 'Approve', 'gold']] }, { label: 'Manage', items: [['Roles and permissions', 'Member, Subteam lead, Admin', '', ''], ['Subteams', '9 subteams · 31 members without one', '31', 'warn'], ['Link parents to students', '', '', '']] }],
+    season: [{ label: 'Season setup', items: [['Scouting form builder', 'Edit after kickoff', '', ''], ['Events and schedule', 'Pulled from The Blue Alliance', '', ''], ['Points rules', 'Early bonus, late penalty, approval', '', ''], ['Archive last season', 'Moves done tasks and orders to the archive', '', '']] }, { label: 'Integrations', items: [['Discord', 'Posting to #taskboard', 'On', 'green'], ['Audit log', 'Who changed what', '', '']] }]
+  },
+  parent: {
+    calendar: { title: 'Calendar', sections: [{ label: 'This week', items: [['Build meeting', 'Tue · 3:30 – 6:30 PM', '', ''], ['Build meeting', 'Thu · 3:30 – 6:30 PM', '', ''], ['Saturday build', 'Sat · 10:00 AM – 4:00 PM', '', '']] }, { label: 'Later', items: [['Holiday break', 'Dec 21 – Jan 3 · no meetings', '', ''], ['Kickoff', 'Sat Jan 9', '', 'gold'], ['Week 0 scrimmage', 'Sat Feb 21', 'Travel', 'warn']] }] },
+    comp: { title: 'Competition', action: 'Watch the stream', sections: [{ label: 'Our matches', items: [['Qual 14', '11:42 AM · Red alliance', 'Next', 'gold'], ['Qual 27', '1:15 PM · Blue alliance', '', ''], ['Qual 39', '3:02 PM · Red alliance', '', '']] }, { label: 'Standing', items: [['Current rank', 'Updates after each match', '8th', 'green']] }] },
+    volunteer: { title: 'Help out', action: 'Sign up for a spot', sections: [{ label: 'Open spots', items: [['Pit lunch', 'Sat Feb 21 · 2 of 4 filled', 'Open', 'gold'], ['Driving to district', 'Mar 6 · 1 seat needed', 'Open', 'gold'], ['Chaperone', 'Mar 6 – 8 · overnight', 'Full', '']] }, { label: 'Your sign-ups', items: [['Snacks for kickoff', 'Sat Jan 9', 'Confirmed', 'green']] }] },
+    me: { title: 'Me', sections: [{ label: 'Your student', items: [['Sam Rivera', 'Electrical · 42.5 h this season', '', 'green']] }, { label: 'Forms and dues', items: [['Season dues', '[AMOUNT]', 'Paid', 'green'], ['Travel permission', 'District event', 'Sign', 'warn'], ['Medical form', 'Needed before first event', 'Missing', 'warn']] }, { label: 'Account', items: [['Notifications', 'Schedule changes, pickup times', '', ''], ['Contact the mentors', '', '', '']] }] },
+    home: [{ label: 'Needs you', items: [['Sign travel permission', 'District event · due Mar 1', 'Sign', 'warn'], ['Pit lunch volunteers', 'Sat Feb 21 · 2 spots left', 'Open', 'gold']] }, { label: 'Coming up', items: [['Week 0 scrimmage', 'Sat Feb 21 · drop-off 7:00 AM', '', ''], ['No meetings over break', 'Dec 21 – Jan 3', '', '']] }],
+    homeComp: [{ label: 'Today', items: [['Qual 14', '11:42 AM · Red alliance', 'Next', 'gold'], ['Qual 27', '1:15 PM · Blue alliance', '', '']] }, { label: 'Pickup', items: [['Estimated return', 'About 6:30 PM at school', '', '']] }]
+  },
+  calendar: [{ label: 'This week', items: [['Build meeting', 'Tue · 3:30 – 6:30 PM · Shop', '', ''], ['Build meeting', 'Thu · 3:30 – 6:30 PM · Shop', '', ''], ['Saturday build', 'Sat · 10:00 AM – 4:00 PM', '', '']] }, { label: 'Later', items: [['Holiday break', 'Dec 21 – Jan 3 · no meetings', '', ''], ['Kickoff watch party', 'Sat Jan 9 · 9:00 AM', 'New', 'gold'], ['Week 0 scrimmage', 'Sat Feb 21', 'Travel', 'warn']] }]
+};
+
+const NOTIFS = {
+  needs: [
+    { who: 'NK', text: '<b>Noah Kim</b> asked to join <b>Wire CAN bus to the pivot</b>', when: '2 hours ago', act: 'join' },
+    { who: 'DR', text: '<b>Diego Ruiz</b> submitted <b>Build a mini super pit</b> for review', when: '5 hours ago', act: 'review', task: 't3' },
+    { who: 'CL', text: '<b>Coach Lee</b> commented on <b>Design and build a driver station</b>', when: 'yesterday', act: 'open', task: 't1' }
+  ],
+  activity: [
+    { who: 'CL', text: '<b>Coach Lee</b> approved your order <b>Colored zip ties</b>', when: 'last week' },
+    { who: 'CL', text: '<b>Coach Lee</b> marked <b>Zip tie mounts</b> as placed', when: 'last week' },
+    { who: 'MC', text: '<b>Maya Chen</b> moved <b>Driver station</b> to In review', when: '2 weeks ago' },
+    { who: 'LP', text: '<b>Leo Park</b> claimed <b>Inventory the Husky drawers</b>', when: '2 weeks ago' },
+    { who: 'CL', text: '<b>Coach Lee</b> moved <b>Clean the practice room</b> to Done · +2 pts', when: '3 weeks ago' }
+  ]
+};
+
+/* ---------------- nav model ---------------- */
+const ROLES = [
+  { id: 'student', name: 'Student', desc: 'Check in, tasks, scouting', hint: 'Use your school Google account.' },
+  { id: 'parent', name: 'Parent', desc: 'Schedule, hours, volunteering', hint: 'Use any Google account. A mentor links you to your student.' },
+  { id: 'mentor', name: 'Mentor', desc: 'Approvals, strategy, admin', hint: 'A team admin confirms mentor access after you sign in.' }
+];
+const PERSON = {
+  student: { greet: 'Hey, Sam', initials: 'SR' },
+  parent: { greet: 'Hi, Jordan', initials: 'JR' },
+  mentor: { greet: 'Hi, Coach', initials: 'CL' }
+};
+const TABS = {
+  student: [['home', 'Home'], ['tasks', 'Tasks'], ['comp', 'Comp'], ['shop', 'Shop'], ['team', 'Team']],
+  mentor: [['home', 'Home'], ['tasks', 'Tasks'], ['comp', 'Comp'], ['shop', 'Shop'], ['admin', 'Admin']],
+  parent: [['home', 'Home'], ['calendar', 'Calendar'], ['comp', 'Comp'], ['volunteer', 'Help out'], ['me', 'Me']]
+};
+const SUBS = {
+  tasks: [['board', 'Board'], ['mine', 'Mine'], ['grabs', 'Up for grabs'], ['leaders', 'Leaderboard']],
+  comp: [['scout', 'Scout'], ['pit', 'Pit'], ['data', 'Data'], ['schedule', 'Schedule']],
+  shop: [['orders', 'Orders'], ['inventory', 'Inventory'], ['batteries', 'Batteries']],
+  team: [['members', 'Members'], ['hours', 'Hours'], ['calendar', 'Calendar']],
+  admin: [['people', 'People'], ['approvals', 'Approvals'], ['season', 'Season']]
+};
+const TAB_TITLE = { tasks: 'Tasks', comp: 'Competition', shop: 'Shop', team: 'Team', admin: 'Admin' };
+
+const DEFAULT_FILTERS = { status: 'open', prio: 'all', team: 'all', sort: 'due' };
+const state = {
+  signedIn: false, picked: 'student', role: 'student', tab: 'home',
+  sub: { tasks: 'board', comp: 'scout', shop: 'orders', team: 'members', admin: 'people' },
+  stack: [], sheet: null, sheetNew: false, checkedIn: false, comp: false,
+  filters: { ...DEFAULT_FILTERS }, draft: null, orderFilter: 'open', lbRange: 'season', notifSeg: 'needs',
+  asked: {}, joinHandled: false, toast: ''
+};
+const app = document.getElementById('app');
+
+/* ---------------- helpers ---------------- */
+const chip = (label, tone, cls = '') => `<span class="chip${tone ? ' t-' + tone : ''}${cls ? ' ' + cls : ''}">${label}</span>`;
+const badge = (label, tone) => label ? `<span class="badge${tone ? ' t-' + tone : ''}">${label}</span>` : '';
+const avatar = (i, cls = '') => `<span class="av ${cls}" style="background:${avColor(i)}" title="${byI[i] ? byI[i].n : i}">${i}</span>`;
+const avatars = (list, max = 4) => `<span class="avs">${list.slice(0, max).map(i => avatar(i)).join('')}${list.length > max ? `<span class="av more">+${list.length - max}</span>` : ''}</span>`;
+const money = (n) => '$' + n.toFixed(2);
+const rowHTML = ([t, m, b, tone]) => `<button type="button" class="row"><span class="dot${tone ? ' t-' + tone : ''}"></span><span class="txt"><span class="ttl">${t}</span>${m ? `<span class="mt">${m}</span>` : ''}</span>${badge(b, tone)}<span class="chev">${icon('chev', 16)}</span></button>`;
+const sectionsHTML = (list, start = 0) => list.map((s, n) => `<section class="group r" style="--i:${start + n}"><h2>${s.label}</h2><div class="list">${s.items.map(rowHTML).join('')}</div></section>`).join('');
+
+function filteredTasks(scope) {
+  const f = state.filters;
+  let list = TASKS.slice();
+  if (scope === 'mine') list = list.filter(t => isMine(t) && t.status !== 'done');
+  else if (scope === 'grabs') list = list.filter(t => !isMine(t) && t.status !== 'done' && t.people.length < t.cap);
+  else {
+    if (f.status === 'open') list = list.filter(t => t.status !== 'done');
+    else if (f.status !== 'all') list = list.filter(t => t.status === f.status);
+    if (f.prio !== 'all') list = list.filter(t => t.prio === f.prio);
+    if (f.team !== 'all') list = list.filter(t => t.team === f.team);
+  }
+  const s = f.sort;
+  list.sort((a, b) => s === 'hard' ? DIFF_N[b.diff] - DIFF_N[a.diff] : s === 'easy' ? DIFF_N[a.diff] - DIFF_N[b.diff] : s === 'prio' ? PRIO_N[b.prio] - PRIO_N[a.prio] : a.days - b.days);
+  return list;
+}
+
+function taskCard(t, i) {
+  const st = STATUS[t.status], pr = PRIO[t.prio];
+  const done = t.checklist.filter(c => c[1]).length;
+  const mine = isMine(t);
+  let join = '';
+  if (!mine && t.status !== 'done' && state.role !== 'parent') {
+    const left = t.cap - t.people.length;
+    if (state.asked[t.id]) join = `<div class="joinbar"><button type="button" class="joinbtn done">${icon('check', 16)} Asked to join · waiting on a lead</button></div>`;
+    else if (left > 0) join = `<div class="joinbar"><button type="button" class="joinbtn gold" data-action="join" data-id="${t.id}">${icon('join', 16)} Join this task · ${left} spot${left > 1 ? 's' : ''} left</button></div>`;
+    else join = `<div class="joinbar"><button type="button" class="joinbtn" data-action="ask" data-id="${t.id}">${icon('join', 16)} Ask to join</button></div>`;
+  }
+  return `<div class="tcard-wrap r${join ? ' has-join' : ''}" style="--i:${i}">
+    <button type="button" class="tcard" data-action="open-task" data-id="${t.id}">
+      <span class="th"><span class="tt">${t.title}</span><span class="pts">${t.pts} pts</span></span>
+      <p class="td">${t.desc}</p>
+      <span class="chips">${chip(st[0], st[1])}${chip(pr[0], pr[1])}${chip(t.diff, '', 'outline')}${t.team !== 'No subteam' ? chip(t.team, '', 'outline') : ''}</span>
+      <span class="tf">${avatars(t.people)}<span class="stats">
+        ${t.checklist.length ? `<span>${icon('list', 14)}${done}/${t.checklist.length}</span>` : ''}
+        ${t.files ? `<span>${icon('clip', 14)}${t.files}</span>` : ''}
+        ${t.comments.length ? `<span>${icon('chat', 14)}${t.comments.length}</span>` : ''}
+        <span style="color:${t.days < 7 && t.status !== 'done' ? 'var(--warn)' : 'var(--text-2)'}">Due ${t.due}</span>
+      </span></span>
+    </button>${join}
+  </div>`;
+}
+
+/* ---------------- headers ---------------- */
+function topHeader(title) {
+  const p = PERSON[state.role];
+  const unread = state.role === 'parent' ? 2 : NOTIFS.needs.length;
+  return `<header class="top">
+    <div class="tl">
+      <div class="meta-row"><span class="date">${state.comp ? 'SAT · FEB 21' : 'TUE · NOV 24'}</span>${state.comp ? '<span class="event-chip">EVENT MODE</span>' : ''}</div>
+      <h1 class="title">${title}</h1>
+    </div>
+    <button type="button" class="iconbtn" data-action="push" data-page="notifs" aria-label="Notifications, ${unread} need you">${icon('bell', 20)}<span class="count">${unread}</span></button>
+    <button type="button" class="avatarbtn" data-action="push" data-page="profile" aria-label="Profile and settings">${p.initials}</button>
+  </header>`;
+}
+function subtabsHTML(tab) {
+  const subs = SUBS[tab];
+  if (!subs || (state.role === 'parent')) return '';
+  const counts = tab === 'tasks' ? { mine: filteredTasks('mine').length, grabs: filteredTasks('grabs').length } : {};
+  return `<div class="subtabs" role="tablist" aria-label="${TAB_TITLE[tab]} views">${subs.map(([id, label]) => `<button type="button" role="tab" class="subtab" data-action="sub" data-sub="${id}" aria-selected="${state.sub[tab] === id}">${label}${counts[id] !== undefined ? `<span class="n">${counts[id]}</span>` : ''}</button>`).join('')}</div>`;
+}
+function tabbarHTML() {
+  const cur = state.stack.length ? null : state.tab;
+  return `<nav class="tabs" aria-label="Sections">${TABS[state.role].map(([id, label]) => `<button type="button" class="tab" data-action="tab" data-tab="${id}"${id === state.tab ? ' aria-current="page"' : ''}><span class="pill">${icon(id)}</span>${label}</button>`).join('')}</nav>`;
+}
+
+/* ---------------- level-1 screens ---------------- */
+function heroHTML(i) {
+  const s = `style="--i:${i}"`, r = state.role, c = state.comp;
+  if (r === 'student' && !c) {
+    const ck = state.checkedIn;
+    return `<section class="hero r" ${s}><div class="stack"><span class="k">Today</span><span class="h">Build meeting</span><span class="sub">3:30 – 6:30 PM · Shop</span></div>
+      <button type="button" class="btn ${ck ? 'btn-outline' : 'btn-gold'}" data-action="check">${ck ? 'Check out' : 'Check in'}</button>
+      ${ck ? '<span class="note ok">Checked in at 3:34 PM · 9.5 h this week</span>' : '<span class="note">Or scan the QR code on the shop kiosk</span>'}</section>`;
+  }
+  if (r === 'student') return `<section class="hero green r" ${s}><span class="k gold">Your next shift · in 14 min</span><div class="baseline"><span class="big gold">Red 2</span><span class="sub" style="color:var(--text)">Q12 – Q18</span></div><button type="button" class="btn btn-gold">Start scouting</button><span class="note ok">Saves on this phone first · 0 waiting to sync</span></section>`;
+  if (r === 'mentor' && !c) return `<section class="hero r" ${s}><span class="k">In the shop now</span><div class="baseline"><span class="big">18</span><span class="sub">/ 34 members</span></div><div class="tiles" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${[['7', 'Mech'], ['4', 'Prog'], ['3', 'Elec'], ['4', 'CAD']].map(([n, l]) => `<div class="tile" style="padding:10px 6px;align-items:center;background:rgba(255,255,255,0.04)"><b style="font-size:20px">${n}</b><span>${l}</span></div>`).join('')}</div></section>`;
+  if (r === 'mentor') return `<section class="hero green r" ${s}><span class="k gold">Strategy · Qual 14 in 18 min</span><div class="stack"><span class="big" style="font-size:30px;line-height:1.05">Pre-match brief is ready</span><span style="font-size:14px;color:var(--text-2)">Built from 6 scouts on all 6 robots</span></div><button type="button" class="btn btn-gold">Open brief</button></section>`;
+  if (!c) return `<section class="hero r" ${s}><span class="k">Sam this season</span><div class="baseline"><span class="big">42.5<span style="font-size:26px"> h</span></span><span style="font-size:14px;color:var(--text-2)">of 60 h goal</span></div><div class="bar"><i style="width:71%"></i></div><span class="note ok" style="justify-content:flex-start">Checked in today at 3:34 PM</span></section>`;
+  return `<section class="hero green r" ${s}><span class="k gold">Live · Week 0 scrimmage</span><div class="stack"><span class="big" style="font-size:34px;line-height:1">Qual 14 in 18 min</span><span style="font-size:14px;color:var(--text-2)">Red alliance · 5829 with 1234 and 4567</span></div><button type="button" class="btn btn-gold">Watch the stream</button></section>`;
+}
+
+function homeHTML() {
+  let out = heroHTML(0);
+  if (state.role === 'parent') return out + sectionsHTML(state.comp ? GENERIC.parent.homeComp : GENERIC.parent.home, 1);
+  if (state.role === 'mentor') {
+    out += `<div class="tiles r" style="--i:1">
+      <button type="button" class="tile gold" data-action="go" data-tab="admin" data-sub="approvals"><b>8</b><span>Waiting on you</span></button>
+      <button type="button" class="tile" data-action="go" data-tab="tasks" data-sub="board"><b>${TASKS.filter(t => t.status === 'review').length}</b><span>Tasks in review</span></button>
+      <button type="button" class="tile" data-action="go" data-tab="shop" data-sub="orders"><b>${ORDERS.filter(o => o.step === 0).length}</b><span>Orders to approve</span></button>
+      <button type="button" class="tile" data-action="go" data-tab="admin" data-sub="people"><b>3</b><span>New members</span></button></div>`;
+    out += `<section class="group r" style="--i:2"><h2>Waiting on you</h2><div class="list">${NOTIFS.needs.map(n => `<button type="button" class="row" ${n.task ? `data-action="open-task" data-id="${n.task}"` : ''}>${avatar(n.who, 'lg')}<span class="txt"><span class="mt" style="color:var(--text)">${n.text}</span><span class="mt" style="font-size:12px;color:var(--text-3)">${n.when}</span></span><span class="chev">${icon('chev', 16)}</span></button>`).join('')}</div></section>`;
+    return out;
+  }
+  const mine = filteredTasks('mine');
+  const me = byI.SR;
+  out += `<div class="tiles r" style="--i:1">
+    <button type="button" class="tile" data-action="go" data-tab="tasks" data-sub="mine"><b>${mine.length}</b><span>Open tasks</span></button>
+    <button type="button" class="tile" data-action="go" data-tab="tasks" data-sub="grabs"><b>${filteredTasks('grabs').length}</b><span>Up for grabs</span></button>
+    <button type="button" class="tile" data-action="go" data-tab="tasks" data-sub="mine"><b>0</b><span>Overdue</span></button>
+    <button type="button" class="tile gold" data-action="go" data-tab="tasks" data-sub="leaders"><b>${me.pts}</b><span>My points · 1st</span></button></div>`;
+  if (state.comp) return out + sectionsHTML([{ label: 'Our next match', items: [['Qual 14 · Red alliance', '11:42 AM · with 1234 and 4567', 'In 18 min', 'gold']] }, { label: 'Sync', items: [['All scouting entries uploaded', '23 saved on this phone', 'Synced', 'green']] }], 2);
+  out += `<section class="group r" style="--i:2"><div class="group-head"><h2>My tasks</h2><button type="button" class="link" data-action="go" data-tab="tasks" data-sub="mine">View all</button></div>${mine.slice(0, 2).map((t, n) => taskCard(t, 3 + n)).join('')}</section>`;
+  out += sectionsHTML([{ label: 'Announcements', items: [['Kickoff watch party', 'Sat Jan 9 · 9:00 AM · commons', 'New', 'gold'], ['Safety glasses on in the shop', 'Pinned by Coach Lee', '', '']] }], 5);
+  return out;
+}
+
+function tasksHTML() {
+  const sub = state.sub.tasks;
+  if (sub === 'leaders') return leaderboardHTML();
+  const list = filteredTasks(sub);
+  let out = `<button type="button" class="btn btn-gold r" style="--i:0" data-action="sheet" data-sheet="newtask">${icon('plus', 18)} New task</button>`;
+  if (sub === 'board') {
+    const f = state.filters, active = [];
+    if (f.status !== 'open') active.push(['status', f.status === 'all' ? 'All statuses' : STATUS[f.status][0]]);
+    if (f.prio !== 'all') active.push(['prio', PRIO[f.prio][0]]);
+    if (f.team !== 'all') active.push(['team', f.team]);
+    if (f.sort !== 'due') active.push(['sort', { hard: 'Hardest first', easy: 'Easiest first', prio: 'By priority' }[f.sort]]);
+    out += `<div class="toolbar r" style="--i:1"><button type="button" class="fbtn${active.length ? ' on' : ''}" data-action="sheet" data-sheet="filters">${icon('filter', 16)} Filters${active.length ? ' · ' + active.length : ''}</button>
+      ${active.map(([k, l]) => `<button type="button" class="fbtn" data-action="clear-filter" data-key="${k}">${l} <span class="x">×</span></button>`).join('')}
+      ${active.length ? '' : '<span class="fbtn" style="border-style:dashed;color:var(--text-3)">Open tasks · due date</span>'}</div>`;
+  }
+  out += `<div class="count-line r" style="--i:1">${list.length} task${list.length === 1 ? '' : 's'}${sub === 'grabs' ? ' with open spots' : sub === 'mine' ? ' assigned to you' : ' matching your filters'}</div>`;
+  out += list.map((t, n) => taskCard(t, 2 + n)).join('') || `<div class="note r" style="--i:2;padding:40px 0">Nothing here. Try clearing a filter.</div>`;
+  return out;
+}
+
+function leaderboardHTML() {
+  const ranked = MEMBERS.filter(m => m.team !== 'Mentors').sort((a, b) => b.pts - a.pts);
+  const ranges = [['season', 'Season'], ['30', '30 days'], ['7', '7 days'], ['all', 'All time']];
+  const podium = [ranked[1], ranked[0], ranked[2]];
+  const teams = {};
+  ranked.forEach(m => { teams[m.team] = (teams[m.team] || 0) + m.pts; });
+  const tlist = Object.entries(teams).sort((a, b) => b[1] - a[1]);
+  const max = tlist[0][1];
+  return `<div class="seg r" style="--i:0" role="group" aria-label="Time range">${ranges.map(([id, l]) => `<button type="button" data-action="lb" data-range="${id}" aria-pressed="${state.lbRange === id}">${l}</button>`).join('')}</div>
+    <p class="count-line r" style="--i:0;margin:0">Points land when a lead marks your task done.</p>
+    <div class="podium r" style="--i:1">${podium.map((m, n) => `<div class="pod${n === 1 ? ' first' : ''}"><span class="place">${['2ND', '1ST', '3RD'][n]}</span>${avatar(m.i, 'lg')}<span class="nm">${m.n.split(' ')[0]}${m.you ? ' (you)' : ''}</span><span class="ps">${m.pts}</span><span class="mt" style="font-size:11px">${m.done} tasks</span></div>`).join('')}</div>
+    <div class="list r" style="--i:2">${ranked.slice(3).map((m, n) => `<div class="rowx"><span class="rank">${n + 4}</span>${avatar(m.i, 'lg')}<span class="txt"><span class="ttl">${m.n}</span><span class="mt">${m.team} · ${m.role}</span></span><span class="pts">${m.pts}</span></div>`).join('')}</div>
+    <section class="group r" style="--i:3"><h2>Subteam standings</h2><div class="list" style="padding:10px 16px">${tlist.map(([t, p]) => `<div class="standing"><span>${t}</span><span class="bar green"><i style="width:${Math.round(p / max * 100)}%"></i></span><b>${p}</b></div>`).join('')}</div></section>`;
+}
+
+function shopHTML() {
+  const sub = state.sub.shop;
+  if (sub === 'orders') {
+    const fl = [['open', 'Open'], ['0', 'Awaiting approval'], ['1', 'Approved'], ['2', 'Placed'], ['3', 'Shipped'], ['4', 'Received']];
+    const list = ORDERS.filter(o => state.orderFilter === 'open' ? o.step < 4 : String(o.step) === state.orderFilter);
+    return `<button type="button" class="btn btn-gold r" style="--i:0" data-action="sheet" data-sheet="neworder">${icon('plus', 18)} New order request</button>
+      <div class="toolbar r" style="--i:1">${fl.map(([id, l]) => `<button type="button" class="fbtn${state.orderFilter === id ? ' on' : ''}" data-action="ofilter" data-f="${id}">${l}</button>`).join('')}</div>
+      <div class="count-line r" style="--i:1">${list.length} order${list.length === 1 ? '' : 's'}</div>
+      ${list.map((o, n) => orderCard(o, 2 + n)).join('') || '<div class="note" style="padding:40px 0">No orders here.</div>'}`;
+  }
+  if (sub === 'inventory') {
+    const low = INVENTORY.filter(x => x[4]).length;
+    return `<div class="toolbar r" style="--i:0;margin:0;padding:0"><input class="search" type="search" placeholder="Search parts" aria-label="Search parts"><button type="button" class="iconbtn" style="border-radius:12px;flex:none" aria-label="Scan a barcode">${icon('scan', 20)}</button></div>
+      <div class="toolbar r" style="--i:1">${['All', 'Low stock · ' + low, 'Hardware', 'Electrical', 'Motors', 'Stock', 'Drivetrain'].map((c, n) => `<span class="fbtn${n === 0 ? ' on' : ''}">${c}</span>`).join('')}</div>
+      <div class="list r" style="--i:2">${INVENTORY.map(([name, loc, qty, cat, isLow]) => `<button type="button" class="row"><span class="dot${isLow ? ' t-warn' : ''}"></span><span class="txt"><span class="ttl">${name}</span><span class="mt">${loc} · ${cat}</span></span><span class="badge${isLow ? ' t-warn' : ''}">${qty}${isLow ? ' · low' : ''}</span><span class="chev">${icon('chev', 16)}</span></button>`).join('')}</div>
+      <p class="note r" style="--i:3">Low items can become an order request in one tap.</p>`;
+  }
+  return `<div class="tiles r" style="--i:0"><div class="tile"><b style="color:var(--green-hi)">2</b><span>Ready to use</span></div><div class="tile"><b>1</b><span>Charging</span></div></div>
+    ${BATTERIES.map(([id, st, tone, v, cyc, note], n) => `<div class="ocard r" style="--i:${1 + n}"><div class="oh"><span class="on" style="font-family:var(--display);font-size:22px">${id}</span>${badge(st, tone)}</div>
+      <div class="facts" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><span>Voltage</span><b>${v}</b></div><div><span>Cycles</span><b style="${cyc > 100 ? 'color:var(--warn)' : ''}">${cyc}</b></div><div><span>Status</span><b>${st}</b></div></div>
+      <span class="om">${note}</span></div>`).join('')}`;
+}
+
+function orderCard(o, i) {
+  const m = byI[o.by];
+  const stepsHTML = ORDER_STEPS.map((s, n) => `<i class="${n < o.step ? 'on' : n === o.step ? (o.step === 4 ? 'on' : 'cur') : ''}"></i>`).join('');
+  const mentorAct = state.role === 'mentor' && o.step === 0 ? `<div class="btn-row"><button type="button" class="btn btn-sm btn-outline" data-action="order-reject" data-id="${o.id}">Reject</button><button type="button" class="btn btn-sm btn-green" data-action="order-approve" data-id="${o.id}">Approve</button></div>` : '';
+  return `<div class="ocard r" style="--i:${i}">
+    <div class="oh"><span class="on">${o.name}</span><span class="price">${money(o.price * o.qty)}</span></div>
+    <span class="om">${o.vendor} · Qty ${o.qty} · ${money(o.price)} each</span>
+    ${o.note ? `<span class="om" style="color:var(--text-3)">${o.note}</span>` : ''}
+    <div class="stack" style="gap:6px"><div class="steps">${stepsHTML}</div><div class="step-labels"><span style="color:${o.step === 4 ? 'var(--green-hi)' : 'var(--gold)'}">${ORDER_STEPS[o.step]}${o.step === 0 ? ' · waiting on a mentor' : ''}</span><span>${o.when}</span></div></div>
+    <div style="display:flex;align-items:center;gap:8px">${avatar(o.by)}<span class="om">Requested by ${m.n}</span></div>
+    ${mentorAct}
+  </div>`;
+}
+
+function teamHTML() {
+  const sub = state.sub.team;
+  if (sub === 'members') {
+    return `<input class="search r" style="--i:0;flex:none" type="search" placeholder="Search people" aria-label="Search people">
+      <div class="toolbar r" style="--i:1">${['Everyone', 'Here now · 18', 'Electrical', 'Mechanical', 'Programming', 'CAD / Design', 'Leads'].map((c, n) => `<span class="fbtn${n === 0 ? ' on' : ''}">${c}</span>`).join('')}</div>
+      <div class="list r" style="--i:2">${MEMBERS.map(m => `<button type="button" class="row">${avatar(m.i, 'lg')}<span class="txt"><span class="ttl">${m.n}${m.you ? ' <span style="color:var(--text-3);font-weight:400">(you)</span>' : ''}</span><span class="mt">${m.role} · ${m.team}</span></span><span class="mt" style="font-family:var(--mono);font-size:12px;text-align:right">${m.open} open<br>${m.done} done</span></button>`).join('')}</div>`;
+  }
+  if (sub === 'hours') {
+    const sessions = [['Tue Nov 24', 'Checked in 3:34 PM', 'Now', 'green'], ['Sat Nov 21', '10:02 AM – 4:11 PM', '6.2 h', ''], ['Thu Nov 19', '3:31 – 6:40 PM', '3.2 h', ''], ['Tue Nov 17', '3:40 – 6:30 PM', '2.8 h', ''], ['Sat Nov 14', 'Forgot to check out', 'Fix', 'warn']];
+    return `<section class="hero r" style="--i:0"><span class="k">This season</span><div class="baseline"><span class="big">42.5<span style="font-size:26px"> h</span></span><span style="font-size:14px;color:var(--text-2)">of 60 h to letter</span></div><div class="bar"><i style="width:71%"></i></div>
+      <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${[['9.5 h', 'This week'], ['6 h', 'Outreach'], ['94%', 'Meetings']].map(([b, l]) => `<div class="tile" style="padding:10px;background:rgba(255,255,255,0.04)"><b style="font-size:20px">${b}</b><span>${l}</span></div>`).join('')}</div></section>
+      <button type="button" class="btn btn-outline r" style="--i:1">${icon('plus', 18)} Log outreach hours</button>
+      ${sectionsHTML([{ label: 'Recent sessions', items: sessions }], 2)}`;
+  }
+  return sectionsHTML(GENERIC.calendar);
+}
+
+function compHTML() {
+  const sub = state.sub.comp;
+  if (sub === 'scout') {
+    return `<section class="hero green r" style="--i:0"><span class="k gold">Your next shift${state.comp ? ' · in 14 min' : ' · Week 0'}</span><div class="baseline"><span class="big gold">Red 2</span><span class="sub" style="color:var(--text)">Q12 – Q18</span></div><button type="button" class="btn btn-gold">Start match scouting</button><span class="note ok">Works offline · 0 waiting to sync</span></section>`
+      + sectionsHTML([{ label: 'Your shifts', items: [['Q12 – Q18 · Red 2', 'Sat · starts 11:10 AM', 'Next', 'gold'], ['Q31 – Q36 · Blue 1', 'Sat · starts 2:05 PM', '', '']] }, { label: 'Your entries', items: [['23 saved on this phone', 'All uploaded', 'Synced', 'green'], ['Show QR backup', 'If the network is down', '', '']] }], 1);
+  }
+  return sectionsHTML(GENERIC.comp[sub]);
+}
+
+function adminHTML() {
+  const sub = state.sub.admin;
+  if (sub === 'approvals') {
+    const rev = TASKS.filter(t => t.status === 'review' || t.status === 'look');
+    return `<section class="group r" style="--i:0"><h2>Tasks to review</h2>${rev.map((t, n) => taskCard(t, 1 + n)).join('')}</section>
+      <section class="group r" style="--i:3"><h2>Orders to approve</h2>${ORDERS.filter(o => o.step === 0).map((o, n) => orderCard(o, 4 + n)).join('')}</section>
+      ${sectionsHTML([{ label: 'Hour corrections', items: [['Sam Rivera · Sat Nov 14', 'Forgot to check out', 'Fix', 'warn'], ['Noah Kim · Thu Nov 19', 'Checked in from home?', 'Check', 'warn']] }], 6)}`;
+  }
+  return sectionsHTML(GENERIC.admin[sub]);
+}
+
+function sectionScreen() {
+  const r = state.role, tab = state.tab;
+  if (tab === 'home') return topHeader(PERSON[r].greet) + `<main>${homeHTML()}</main>`;
+  if (r === 'parent') {
+    const g = GENERIC.parent[tab];
+    return topHeader(g.title) + `<main>${g.action ? `<button type="button" class="btn btn-gold r" style="--i:0">${icon('plus', 18)} ${g.action}</button>` : ''}${sectionsHTML(g.sections, 1)}</main>`;
+  }
+  const body = { tasks: tasksHTML, shop: shopHTML, team: teamHTML, comp: compHTML, admin: adminHTML }[tab]();
+  return topHeader(TAB_TITLE[tab]) + subtabsHTML(tab) + `<main>${body}</main>`;
+}
+
+/* ---------------- level-3 pages ---------------- */
+function pageBar(backLabel, title) {
+  return `<header class="pagebar"><button type="button" class="back" data-action="back">${icon('back', 20)} ${backLabel}</button><span class="pt">${title}</span></header>`;
+}
+
+function taskPage(t) {
+  const st = STATUS[t.status], pr = PRIO[t.prio];
+  const base = t.pts;
+  const mult = t.days >= 7 ? 2 : t.days >= 3 ? 1.5 : t.days >= 1 ? 1.25 : t.days < 0 ? 0.5 : 1;
+  const done = t.checklist.filter(c => c[1]).length;
+  const mine = isMine(t);
+  const order = ['todo', 'progress', 'look', 'review', 'done'];
+  const cur = order.indexOf(t.status);
+  let actions;
+  if (state.role === 'mentor') actions = `<div class="btn-row"><button type="button" class="btn btn-outline" data-action="toast" data-msg="Sent back with a comment (demo)">Send back</button><button type="button" class="btn btn-green" data-action="toast" data-msg="Approved · ${base * mult} pts awarded (demo)">Approve · ${base * mult} pts</button></div>`;
+  else if (mine) actions = `<div class="btn-row"><button type="button" class="btn btn-outline" data-action="toast" data-msg="A lead will take a look (demo)">Ask for a look</button><button type="button" class="btn btn-gold" data-action="toast" data-msg="Submitted for review (demo)">Submit for review</button></div>`;
+  else actions = `<button type="button" class="btn btn-gold" data-action="${t.people.length < t.cap ? 'join' : 'ask'}" data-id="${t.id}">${icon('join', 18)} ${t.people.length < t.cap ? 'Join this task' : 'Ask to join'}</button>`;
+  const who = t.people.map(i => byI[i]).filter(Boolean);
+  return `<div class="pagewrap">${pageBar(state.stack.length > 1 ? 'Back' : TAB_TITLE[state.tab] || 'Home', '')}
+  <main>
+    <div class="stack" style="gap:12px"><div style="display:flex;gap:10px;align-items:flex-start"><h1 class="dt-title" style="flex:1">${t.title}</h1><span class="pts" style="font-size:14px;padding:6px 10px">${t.pts} pts</span></div>
+      <span class="chips">${chip(st[0], st[1])}${chip(pr[0], pr[1])}${chip(t.diff, '', 'outline')}</span></div>
+    <p class="desc">${t.desc}</p>
+    <div class="facts"><div><span>Due</span><b style="${t.days < 7 ? 'color:var(--warn)' : ''}">${t.due}</b></div><div><span>Subteam</span><b>${t.team}</b></div><div><span>Robot</span><b>${t.robot}</b></div><div><span>Created by</span><b>${t.by}</b></div></div>
+
+    <section class="group"><h2>Status</h2><div class="hero" style="padding:16px;gap:12px">
+      <div class="steps">${order.map((s, n) => `<i class="${n < cur ? 'on' : n === cur ? 'cur' : ''}"></i>`).join('')}</div>
+      <div class="step-labels"><span>To do</span><span>Working</span><span>Look</span><span>Review</span><span>Done</span></div>
+      ${actions}
+    </div></section>
+
+    <section class="group"><h2>Points</h2><div class="hero green" style="padding:16px;gap:12px">
+      <div class="baseline"><span class="big gold" style="font-size:40px">${base * mult}</span><span style="font-size:14px;color:var(--text-2)">pts if finished today · ${base} × ${mult} for ${t.days} days early</span></div>
+      <div class="mult">${[['1.25×', '1+ day'], ['1.5×', '3+ days'], ['2×', '7+ days'], ['−50%', 'Late']].map(([b, l], n) => `<div class="${(n === 2 && mult === 2) || (n === 1 && mult === 1.5) || (n === 0 && mult === 1.25) || (n === 3 && mult === 0.5) ? 'hit' : ''}"><b>${b}</b><span>${l}</span></div>`).join('')}</div>
+      <span class="mt" style="color:var(--text-2)">A lead approves before the points land.</span>
+    </div></section>
+
+    ${t.checklist.length ? `<section class="group"><div class="group-head"><h2>Checklist · ${done}/${t.checklist.length}</h2></div><div class="list">${t.checklist.map(([label, ok], n) => `<button type="button" class="check" role="checkbox" aria-checked="${!!ok}" data-action="tick" data-id="${t.id}" data-n="${n}"><span class="box">${ok ? icon('check', 14) : ''}</span><span class="cl">${label}</span></button>`).join('')}</div></section>` : ''}
+
+    <section class="group"><h2>Files · ${t.files}</h2><div class="files">${Array.from({ length: Math.min(t.files, 2) }, (_, n) => `<div class="file">${icon('image', 22)}<span>${['driverstation-v3.png', 'cad-export.step'][n]}</span></div>`).join('')}<button type="button" class="file add">${icon('plus', 22)}<span>Add file or paste screenshot</span></button></div></section>
+
+    <section class="group"><h2>Comments · ${t.comments.length}</h2>
+      ${t.comments.map(([i, n, w, txt]) => `<div class="comment">${avatar(i, 'lg')}<div class="bubble"><span class="who">${n}<span>${w}</span></span><p>${txt}</p></div></div>`).join('')}
+      <div class="composer"><input class="search" placeholder="Write a comment" aria-label="Write a comment"><button type="button" class="iconbtn" aria-label="Attach image">${icon('image', 18)}</button><button type="button" class="iconbtn" style="background:var(--gold);color:var(--gold-ink);border:none" aria-label="Post comment">${icon('send', 18)}</button></div>
+    </section>
+
+    <section class="group"><h2>Assigned · ${t.people.length} of ${t.cap}</h2><div class="list">${who.map(m => `<div class="rowx">${avatar(m.i, 'lg')}<span class="txt"><span class="ttl">${m.n}</span><span class="mt">${m.team}</span></span></div>`).join('')}</div>
+      ${mine ? '<span class="mt" style="color:var(--text-3)">You\'re on this one. Ask your subteam lead to come off it.</span>' : ''}</section>
+
+    <section class="group"><h2>Activity</h2><div class="activity">
+      <div><span><b>Coach Lee</b> moved it to In progress · <span>2 weeks ago</span></span></div>
+      <div><span><b>Maya Chen</b> submitted it for review · <span>2 weeks ago</span></span></div>
+      <div><span><b>Coach Lee</b> added <b>Sam Rivera</b> · <span>last month</span></span></div>
+      <div><span><b>${t.by}</b> created the task · <span>last month</span></span></div>
+    </div></section>
+  </main></div>`;
+}
+
+function notifsPage() {
+  const seg = state.notifSeg;
+  const list = NOTIFS[seg];
+  const items = list.map((n, k) => {
+    let act = '';
+    if (n.act === 'join') act = state.joinHandled ? `<span class="badge t-green">Approved</span>` : `<div class="btn-row" style="margin-top:8px"><button type="button" class="btn btn-sm btn-outline" data-action="join-decide">Decline</button><button type="button" class="btn btn-sm btn-green" data-action="join-decide">Approve</button></div>`;
+    else if (n.act === 'review') act = `<div class="btn-row" style="margin-top:8px"><button type="button" class="btn btn-sm btn-gold" data-action="open-task" data-id="${n.task}">Review task</button></div>`;
+    return `<div class="rowx r" style="--i:${k + 1};align-items:flex-start" ${n.act === 'open' ? `data-action="open-task" data-id="${n.task}"` : ''}>${avatar(n.who, 'lg')}<span class="txt"><span class="mt" style="color:var(--text-2);line-height:1.45">${n.text.replace(/<b>/g, '<b style="color:var(--text);font-weight:600">')}</span><span class="mt" style="font-size:12px;color:var(--text-3)">${n.when}</span>${act}</span></div>`;
+  }).join('');
+  return `<div class="pagewrap">${pageBar('Back', 'Notifications')}<main>
+    <div class="seg r" style="--i:0" role="group" aria-label="Notification type"><button type="button" data-action="nseg" data-seg="needs" aria-pressed="${seg === 'needs'}">Needs you · ${NOTIFS.needs.length}</button><button type="button" data-action="nseg" data-seg="activity" aria-pressed="${seg === 'activity'}">Activity</button></div>
+    <p class="count-line r" style="--i:0;margin:0">${seg === 'needs' ? 'Only these send a phone notification.' : 'Everything else. No phone alerts.'}</p>
+    <div class="list">${items}</div>
+    ${seg === 'activity' ? '<button type="button" class="link" style="align-self:center">Mark all read</button>' : ''}
+  </main></div>`;
+}
+
+function profilePage() {
+  const r = state.role;
+  const name = r === 'mentor' ? 'Coach Lee' : r === 'parent' ? 'Jordan Rivera' : 'Sam Rivera';
+  const role = r === 'mentor' ? 'Mentor · Admin' : r === 'parent' ? 'Parent of Sam Rivera' : 'Student · Subteam lead · Electrical';
+  const p = PERSON[r];
+  return `<div class="pagewrap">${pageBar('Back', 'Profile')}<main>
+    <section class="hero r" style="--i:0;align-items:center;text-align:center"><span class="av" style="width:72px;height:72px;font-size:22px;border:none;margin:0;background:var(--green-deep)">${p.initials}</span><div class="stack"><span class="h">${name}</span><span class="mt">${role}</span></div><span class="mt" style="color:var(--text-3)">Your role and subteam are set by an admin.</span></section>
+    ${sectionsHTML([
+      { label: 'Profile', items: [['Profile picture', 'Upload, or use your Google photo', '', ''], ['Display name', name, '', '']] },
+      { label: 'Notifications', items: [['Phone notifications', 'Only things that need you', 'On', 'green'], ['Discord', 'Linked · @mentions on', 'Linked', 'green']] },
+      { label: 'Appearance', items: [['Theme', 'Dark · Forest colors', '', '']] }
+    ], 1)}
+    <button type="button" class="btn btn-outline r" style="--i:4" data-action="signout">Switch role / sign out</button>
+  </main></div>`;
+}
+
+/* ---------------- sheets ---------------- */
+function sheetHTML() {
+  const s = state.sheet;
+  let head = '', body = '', foot = '';
+  if (s === 'filters') {
+    const d = state.draft;
+    const group = (label, key, opts) => `<div class="stack" style="gap:10px"><span class="k">${label}</span><div class="chips">${opts.map(([v, l]) => `<button type="button" class="opt" data-action="draft" data-key="${key}" data-val="${v}" aria-pressed="${d[key] === v}">${l}</button>`).join('')}</div></div>`;
+    head = 'Filters';
+    body = group('Status', 'status', [['open', 'Open'], ['all', 'All'], ['todo', 'To do'], ['progress', 'In progress'], ['look', 'Needs a look'], ['review', 'In review'], ['done', 'Done']])
+      + group('Priority', 'prio', [['all', 'All'], ['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['critical', 'Critical']])
+      + group('Subteam', 'team', [['all', 'All'], ...['CAD / Design', 'Electrical', 'Fabrication', 'Programming', 'Awards', 'No subteam'].map(x => [x, x])])
+      + group('Sort by', 'sort', [['due', 'Due date'], ['hard', 'Hardest first'], ['easy', 'Easiest first'], ['prio', 'Priority']]);
+    const saved = state.filters; state.filters = d; const n = filteredTasks('board').length; state.filters = saved;
+    foot = `<button type="button" class="btn btn-outline" data-action="draft-reset">Reset</button><button type="button" class="btn btn-gold" data-action="draft-apply">Show ${n} task${n === 1 ? '' : 's'}</button>`;
+  } else if (s === 'neworder') {
+    head = 'New order request';
+    body = `<div class="field"><label for="f-item">What do you need?</label><input id="f-item" placeholder="e.g. 10-32 nylock nuts, 100 pack"></div>
+      <div class="field"><label for="f-link">Link</label><input id="f-link" type="url" placeholder="https://"></div>
+      <div class="field-row"><div class="field"><label for="f-vendor">Vendor</label><select id="f-vendor">${VENDORS.map(v => `<option>${v}</option>`).join('')}</select></div><div class="field"><label for="f-qty">Quantity</label><input id="f-qty" type="number" min="1" value="1"></div></div>
+      <div class="field"><label for="f-price">Price each</label><input id="f-price" inputmode="decimal" placeholder="$0.00"></div>
+      <div class="field"><label for="f-why">Why do we need it?</label><textarea id="f-why" placeholder="A mentor sees this when approving"></textarea></div>`;
+    foot = `<button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="toast-close" data-msg="Order request sent to mentors (demo)">Send request</button>`;
+  } else if (s === 'newtask') {
+    head = 'New task';
+    body = `<div class="field"><label for="t-title">Title</label><input id="t-title" placeholder="e.g. Wire the climber"></div>
+      <div class="field"><label for="t-desc">Description</label><textarea id="t-desc" placeholder="What does done look like?"></textarea></div>
+      <div class="field-row"><div class="field"><label for="t-prio">Priority</label><select id="t-prio"><option>Low</option><option>Medium</option><option selected>High</option><option>Critical</option></select></div><div class="field"><label for="t-diff">Difficulty</label><select id="t-diff"><option>Easy</option><option>Semi-difficult</option><option>Difficult</option><option>Extra difficult</option></select></div></div>
+      <div class="field-row"><div class="field"><label for="t-team">Subteam</label><select id="t-team"><option>Electrical</option><option>Mechanical</option><option>Programming</option><option>CAD / Design</option><option>No subteam</option></select></div><div class="field"><label for="t-due">Due</label><input id="t-due" type="date" value="2026-12-18"></div></div>
+      <div class="field-row"><div class="field"><label for="t-cap">Spots</label><input id="t-cap" type="number" min="1" value="3"></div><div class="field"><label for="t-robot">Robot</label><select id="t-robot"><option>No robot</option><option>PracticeBot</option></select></div></div>`;
+    foot = `<button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="toast-close" data-msg="Task created and posted to Discord (demo)">Create task</button>`;
+  }
+  return `<div class="sheet-wrap${state.sheetNew ? ' new' : ''}"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="${head}"><div class="handle"></div><div class="sh"><h2>${head}</h2><button type="button" class="link" data-action="close-sheet">Close</button></div><div class="sb">${body}</div><div class="sf">${foot}</div></div></div>`;
+}
+
+/* ---------------- login ---------------- */
+function loginHTML() {
+  const pick = ROLES.find(r => r.id === state.picked);
+  return `<div class="login">
+    <div class="ghost" aria-hidden="true">5829</div>
+    <div class="brand"><div class="mark r" style="--i:0">5829</div><div class="r" style="--i:1"><h1 class="wordmark">Awtybots<span>.</span></h1><p class="tagline">Tasks, hours, orders and scouting, in one place.</p></div></div>
+    <div class="r" style="--i:2" role="radiogroup" aria-label="I'm a"><div class="eyebrow">I'm a</div><div class="roles">
+      ${ROLES.map(r => `<button type="button" class="role" role="radio" aria-checked="${r.id === state.picked}" data-action="pick" data-role="${r.id}"><span class="rt"><span class="rn">${r.name}</span><span class="rd">${r.desc}</span></span><span class="radio"><i></i></span></button>`).join('')}
+    </div></div>
+    <div class="stack r" style="--i:3;gap:12px"><button type="button" class="btn btn-light" data-action="signin">${icon('enter', 20)} Continue with Google</button><p class="hint">${pick.hint}</p></div>
+  </div>`;
+}
+
+/* ---------------- render ---------------- */
+function render(anim = '1') {
+  app.dataset.anim = anim;
+  let html;
+  if (!state.signedIn) html = loginHTML();
+  else {
+    const top = state.stack[state.stack.length - 1];
+    let screen;
+    if (!top) screen = sectionScreen();
+    else if (top.type === 'task') screen = taskPage(taskById(top.id));
+    else if (top.type === 'notifs') screen = notifsPage();
+    else screen = profilePage();
+    html = screen + tabbarHTML() + (state.sheet ? sheetHTML() : '');
+  }
+  if (state.toast) html += `<div class="toast" role="status">${state.toast}</div>`;
+  app.innerHTML = html;
+  state.sheetNew = false;
+  state.toast = '';
+  document.querySelectorAll('#jump button').forEach(b => {
+    const r = b.dataset.role;
+    b.setAttribute('aria-pressed', String(r === 'login' ? !state.signedIn : state.signedIn && state.role === r));
+  });
+  document.getElementById('compSwitch').setAttribute('aria-checked', String(state.comp));
+}
+const scrollTop = () => { const m = app.querySelector('main'); if (m) m.scrollTop = 0; };
+const keepScroll = (fn) => { const m = app.querySelector('main'); const y = m ? m.scrollTop : 0; fn(); const n = app.querySelector('main'); if (n) n.scrollTop = y; };
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const a = el.dataset.action, d = el.dataset;
+  switch (a) {
+    case 'pick': state.picked = d.role; render('0'); break;
+    case 'signin': Object.assign(state, { role: state.picked, signedIn: true, tab: 'home', stack: [], sheet: null }); render(); break;
+    case 'signout': Object.assign(state, { signedIn: false, picked: state.role, stack: [], sheet: null }); render(); break;
+    case 'jump':
+      if (d.role === 'login') Object.assign(state, { signedIn: false, stack: [], sheet: null });
+      else Object.assign(state, { role: d.role, picked: d.role, signedIn: true, tab: 'home', stack: [], sheet: null });
+      render(); break;
+    case 'comp': state.comp = !state.comp; render(); break;
+    case 'tab': state.stack = []; state.sheet = null; if (state.tab !== d.tab) { state.tab = d.tab; render(); scrollTop(); } else render('0'); break;
+    case 'sub': state.sub[state.tab] = d.sub; render(); scrollTop(); break;
+    case 'go': state.tab = d.tab; if (d.sub) state.sub[d.tab] = d.sub; state.stack = []; render(); scrollTop(); break;
+    case 'open-task': state.stack.push({ type: 'task', id: d.id }); render('page'); scrollTop(); break;
+    case 'push': state.stack.push({ type: d.page }); render('page'); scrollTop(); break;
+    case 'back': state.stack.pop(); render('0'); break;
+    case 'check': state.checkedIn = !state.checkedIn; keepScroll(() => render('0')); break;
+    case 'tick': { const t = taskById(d.id); t.checklist[+d.n][1] = t.checklist[+d.n][1] ? 0 : 1; keepScroll(() => render('0')); break; }
+    case 'join': { const t = taskById(d.id); if (!t.people.includes('SR')) t.people.push('SR'); state.toast = 'You joined "' + t.title + '"'; keepScroll(() => render('0')); break; }
+    case 'ask': state.asked[d.id] = true; state.toast = 'Asked to join · a lead will decide'; keepScroll(() => render('0')); break;
+    case 'join-decide': state.joinHandled = true; keepScroll(() => render('0')); break;
+    case 'nseg': state.notifSeg = d.seg; render('0'); break;
+    case 'lb': state.lbRange = d.range; keepScroll(() => render('0')); break;
+    case 'ofilter': state.orderFilter = d.f; keepScroll(() => render('0')); break;
+    case 'order-approve': { const o = ORDERS.find(x => x.id === d.id); o.step = 1; state.toast = 'Order approved'; keepScroll(() => render('0')); break; }
+    case 'order-reject': { const i = ORDERS.findIndex(x => x.id === d.id); ORDERS.splice(i, 1); state.toast = 'Order rejected'; keepScroll(() => render('0')); break; }
+    case 'sheet': state.sheet = d.sheet; state.sheetNew = true; if (d.sheet === 'filters') state.draft = { ...state.filters }; keepScroll(() => render('0')); break;
+    case 'close-sheet': state.sheet = null; keepScroll(() => render('0')); break;
+    case 'draft': state.draft[d.key] = d.val; { const sb = app.querySelector('.sheet .sb'); const y = sb ? sb.scrollTop : 0; keepScroll(() => render('0')); const n = app.querySelector('.sheet .sb'); if (n) n.scrollTop = y; } break;
+    case 'draft-reset': state.draft = { ...DEFAULT_FILTERS }; keepScroll(() => render('0')); break;
+    case 'draft-apply': state.filters = { ...state.draft }; state.sheet = null; render(); break;
+    case 'clear-filter': state.filters[d.key] = DEFAULT_FILTERS[d.key]; render(); break;
+    case 'toast': state.toast = d.msg; keepScroll(() => render('0')); break;
+    case 'toast-close': state.toast = d.msg; state.sheet = null; keepScroll(() => render('0')); break;
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.sheet) { state.sheet = null; render('0'); } });
+
+/* ================= v4 · soft overrides (later declarations replace the v2 ones) ================= */
+Object.assign(ICONS, {
+  sparkle: '<path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7z"/>',
+  bolt: '<path d="M13 3 4 14h7l-1 7 9-11h-7z"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  arrow: '<path d="M7 17 17 7M9 7h8v8"/>'
+});
+AVC.splice(0, AVC.length, '#2E9E62', '#C48A12', '#3C7D9E', '#7E63B8', '#C9613F', '#4F8F6E', '#A97A1C');
+SUBS.shop = [['inventory', 'Inventory'], ['places', 'Places'], ['orders', 'Orders'], ['batteries', 'Batteries']];
+state.sub.shop = 'inventory';
+Object.assign(state, { invCat: 'All', invQuery: '', acc: {} });
+
+/* parts from the team inventory app (sample of the 93) */
+const PLACES = [
+  ['Cabinet', 'Grey parts cabinet: shelves and door bins', 32],
+  ['Pegboard wall', 'Hanging tools and power tools', 7],
+  ['Husky', 'The big Husky tool chest: hand tools, motors, wheels', 23],
+  ['Husky mechanical', 'Two Husky organizers: gearbox parts, brackets, washers', 12],
+  ['Husky electrical', 'Two Husky organizers: wire, connectors, breakers, sensors', 9],
+  ['Ridgid organizers', 'REV 10-32 hardware by length', 10]
+];
+const PARTS = [
+  { id: '832-025', name: '8-32 × 1/4" bolts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 0, want: 20, kind: 'bolt', color: '#F2D530', len: 0.35 },
+  { id: '832-058', name: '8-32 × 5/8" bolts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 4, want: 20, kind: 'bolt', color: '#3CCB3C', len: 0.55 },
+  { id: '832-078', name: '8-32 × 7/8" bolts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 40, want: 20, kind: 'bolt', color: '#62C6F0', len: 0.7 },
+  { id: '832-100', name: '8-32 × 1" bolts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 60, want: 20, kind: 'bolt', color: '#2F45D6', len: 0.78 },
+  { id: '832-250', name: '8-32 × 2.5" bolts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 2, want: 15, kind: 'bolt', color: '#9A9FA5', len: 1 },
+  { id: '1032-025', name: '10-32 × 1/4" bolts', sku: 'REV-29-2910', cat: 'Bolts & nuts', place: 'Ridgid organizers', qty: 0, want: 15, kind: 'bolt', color: '#3A3F44', len: 0.35 },
+  { id: '1032-038', name: '10-32 × 3/8" bolts', sku: 'REV-29-2912', cat: 'Bolts & nuts', place: 'Ridgid organizers', qty: 0, want: 15, kind: 'bolt', color: '#3A3F44', len: 0.45 },
+  { id: '1032-100', name: '10-32 × 1" bolts', sku: 'REV-29-2922', cat: 'Bolts & nuts', place: 'Ridgid organizers', qty: 3, want: 15, kind: 'bolt', color: '#3A3F44', len: 0.78 },
+  { id: '832-nut', name: '8-32 lock nuts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 300, want: 50, kind: 'nut', color: '#3C7DD9' },
+  { id: '1032-nut', name: '10-32 lock nuts', cat: 'Bolts & nuts', place: 'Cabinet', qty: 80, want: 50, kind: 'nut', color: '#3C7DD9' },
+  { id: 'sp-018', name: '1/8" spacers', cat: 'Mechanical', place: 'Cabinet', qty: 200, want: 50, kind: 'ring', color: '#E9E6DE' },
+  { id: 'collar', name: 'Shaft collars', cat: 'Mechanical', place: 'Cabinet', qty: 40, want: 10, kind: 'ring', color: '#8D949A' },
+  { id: 'bearing', name: 'Flanged bearings', cat: 'Mechanical', place: 'Cabinet', qty: 35, want: 10, kind: 'bearing', color: '#B9BEC4' },
+  { id: 'neo', name: 'NEO Vortex motors', cat: 'Mechanical', place: 'Husky', qty: 6, want: 4, kind: 'motor', color: '#E0772F' },
+  { id: 'wago', name: 'WAGO 221 connectors', cat: 'Electrical', place: 'Husky electrical', qty: 48, want: 20, kind: 'box', color: '#F08A24' },
+  { id: 'breaker', name: '40A breakers', cat: 'Electrical', place: 'Husky electrical', qty: 3, want: 4, kind: 'box', color: '#2B2F33' },
+  { id: 'wire18', name: '18 AWG wire, red', cat: 'Electrical', place: 'Husky electrical', qty: 2, want: 2, unit: 'spools', kind: 'wire', color: '#D93A2B' },
+  { id: 'drill', name: 'Cordless drills', cat: 'Tools', place: 'Pegboard wall', qty: 2, want: 2, kind: 'box', color: '#1F9D57' },
+  { id: 'allen', name: 'Hex key sets', cat: 'Tools', place: 'Husky', qty: 4, want: 3, kind: 'box', color: '#C48A12' },
+  { id: 'zip', name: 'Zip ties, 8 in', cat: 'Supplies', place: 'Cabinet', qty: 30, want: 100, kind: 'wire', color: '#2B2F33' }
+];
+const partById = (id) => PARTS.find(p => p.id === id);
+const isLow = (p) => p.qty < p.want;
+
+function partArt(p, w) {
+  if (p.kind === 'bolt') {
+    const L = Math.round(30 + 66 * (p.len || 0.6));
+    const threads = Array.from({ length: Math.floor(L / 6) }, (_, n) => `<path d="M${46 + n * 6} 23v14" stroke="#99A0A7" stroke-width="2"/>`).join('');
+    return `<svg viewBox="0 0 120 60" width="${w}" aria-hidden="true"><rect x="40" y="22" width="${L}" height="16" rx="4" fill="#CDD2D7"/>${threads}<rect x="12" y="11" width="32" height="38" rx="11" fill="${p.color}"/><rect x="23" y="24" width="10" height="12" rx="2" fill="rgba(0,0,0,0.25)"/><rect x="16" y="14" width="6" height="30" rx="3" fill="rgba(255,255,255,0.35)"/></svg>`;
+  }
+  if (p.kind === 'nut') return `<svg viewBox="0 0 60 60" width="${w * 0.55}" aria-hidden="true"><polygon points="30,6 51,18 51,42 30,54 9,42 9,18" fill="#C2C7CC"/><polygon points="30,10 47,20 47,40 30,50 13,40 13,20" fill="#D5D9DD"/><circle cx="30" cy="30" r="13" fill="none" stroke="${p.color}" stroke-width="4"/><circle cx="30" cy="30" r="9" fill="#F1EFE9"/></svg>`;
+  if (p.kind === 'ring') return `<svg viewBox="0 0 60 60" width="${w * 0.55}" aria-hidden="true"><circle cx="30" cy="30" r="24" fill="${p.color}" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/><circle cx="30" cy="30" r="10" fill="#F1EFE9" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/></svg>`;
+  if (p.kind === 'bearing') return `<svg viewBox="0 0 60 60" width="${w * 0.55}" aria-hidden="true"><circle cx="30" cy="30" r="26" fill="#A9AFB5"/><circle cx="30" cy="30" r="21" fill="${p.color}"/><circle cx="30" cy="30" r="14" fill="#8D949A"/><circle cx="30" cy="30" r="8" fill="#F1EFE9"/></svg>`;
+  if (p.kind === 'motor') return `<svg viewBox="0 0 80 60" width="${w * 0.7}" aria-hidden="true"><rect x="8" y="12" width="48" height="36" rx="9" fill="${p.color}"/><rect x="14" y="12" width="6" height="36" fill="rgba(0,0,0,0.12)"/><rect x="56" y="22" width="8" height="16" rx="2" fill="#5A6066"/><rect x="64" y="27" width="10" height="6" rx="2" fill="#B9BEC4"/></svg>`;
+  if (p.kind === 'wire') return `<svg viewBox="0 0 60 60" width="${w * 0.55}" aria-hidden="true"><circle cx="30" cy="30" r="22" fill="none" stroke="${p.color}" stroke-width="5"/><circle cx="30" cy="30" r="14" fill="none" stroke="${p.color}" stroke-width="5" opacity="0.8"/><circle cx="30" cy="30" r="6" fill="${p.color}" opacity="0.6"/></svg>`;
+  return `<svg viewBox="0 0 60 60" width="${w * 0.55}" aria-hidden="true"><rect x="10" y="14" width="40" height="32" rx="8" fill="${p.color}"/><rect x="16" y="20" width="12" height="20" rx="3" fill="rgba(255,255,255,0.35)"/><rect x="32" y="20" width="12" height="20" rx="3" fill="rgba(255,255,255,0.2)"/></svg>`;
+}
+
+function gearArt(dark) {
+  const f = dark ? 'rgba(42,30,0,0.12)' : 'rgba(255,255,255,0.2)';
+  const c = dark ? '#FFFFFF' : '#F2B81F';
+  return `<svg class="art" viewBox="0 0 100 100" aria-hidden="true"><g fill="${f}">${[0, 30, 60, 90, 120, 150].map(a => `<rect x="44" y="6" width="12" height="88" rx="4" transform="rotate(${a} 50 50)"/>`).join('')}<circle cx="50" cy="50" r="32"/></g><circle cx="50" cy="50" r="13" fill="${c}"/></svg>`;
+}
+
+function ringTile(pct, center, label, color) {
+  const c = 2 * Math.PI * 28;
+  return `<div class="rtile"><div class="rw"><svg viewBox="0 0 66 66" aria-hidden="true"><circle class="rt" cx="33" cy="33" r="28"/><circle class="rf" cx="33" cy="33" r="28" stroke="${color}" stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 33 33)"/></svg><span class="rc">${center}</span></div><span>${label}</span></div>`;
+}
+
+function gaugeHTML(segs, total) {
+  const L = Math.PI * 78, gap = 26;
+  let off = 0;
+  const paths = segs.map(([, v, col]) => {
+    const frac = v / total, len = Math.max(frac * L - gap, 2);
+    const p = `<path d="M 22 100 A 78 78 0 0 1 178 100" fill="none" stroke="${col}" stroke-width="24" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${L.toFixed(1)}" stroke-dashoffset="${(-off - gap / 2).toFixed(1)}"/>`;
+    off += frac * L;
+    return p;
+  }).join('');
+  return `<div class="gauge"><svg viewBox="0 0 200 118" aria-hidden="true">${paths}</svg><div class="gv"><span>Total hours</span><b>${total}</b></div></div>`;
+}
+
+function insight({ cls = '', tag, title, text = '', left, btn, action = '', data = '' }) {
+  return `<section class="insight ${cls} r" style="--i:0">${gearArt(cls === 'gold')}<span class="tag">${icon('sparkle', 14)} ${tag}</span><h3>${title}</h3>${text ? `<p>${text}</p>` : ''}<div class="bar2"><span>${left}</span><button type="button" class="btn" data-action="${action}" ${data}>${btn}</button></div></section>`;
+}
+
+function topHeader(title) {
+  const p = PERSON[state.role];
+  const unread = state.role === 'parent' ? 2 : NOTIFS.needs.length;
+  const bell = `<button type="button" class="iconbtn" data-action="push" data-page="notifs" aria-label="Notifications, ${unread} need you">${icon('bell', 20)}<span class="count">${unread}</span></button>`;
+  const me = `<button type="button" class="avatarbtn" data-action="push" data-page="profile" aria-label="Profile and settings">${p.initials}</button>`;
+  if (state.tab === 'home') {
+    const name = p.greet.split(', ')[1];
+    return `<header class="top home">${me}<div class="tl"><span class="date">${state.comp ? 'Sat, February 21' : 'Tue, November 24'}${state.comp ? ' <span class="event-chip">Event day</span>' : ''}</span><span class="greet">Good afternoon, ${name}</span></div>${bell}</header>`;
+  }
+  return `<header class="top"><div class="tl"><h1 class="title">${title}</h1></div>${bell}${me}</header>`;
+}
+
+function tabbarHTML() {
+  return `<nav class="tabs" aria-label="Sections"><div class="tabpill">${TABS[state.role].map(([id, label]) => `<button type="button" class="tab" data-action="tab" data-tab="${id}"${id === state.tab ? ' aria-current="page"' : ''}>${icon(id)}<span>${label}</span></button>`).join('')}</div><button type="button" class="fab" data-action="quick" aria-label="Quick actions">${icon('plus', 26)}</button></nav>`;
+}
+
+function todayRow(t) {
+  return `<button type="button" class="row" data-action="open-task" data-id="${t.id}"><span class="ticon${t.prio === 'critical' ? ' warn' : t.prio === 'high' ? ' gold' : ''}">${icon('tasks', 20)}</span><span class="txt"><span class="ttl">${t.title}</span><span class="mt">${t.team !== 'No subteam' ? t.team : STATUS[t.status][0]}</span></span><span class="when">${t.due}<span>Due</span></span></button>`;
+}
+
+function homeHTML() {
+  const r = state.role, comp = state.comp;
+  const low = PARTS.filter(isLow);
+  if (r === 'parent') {
+    const top = comp
+      ? insight({ tag: 'Live now', title: 'Qual 14 in 18 minutes', text: 'Red alliance · 5829 with 1234 and 4567', left: 'Week 0 scrimmage', btn: 'Watch', action: 'toast', data: 'data-msg="Opens the event stream (demo)"' })
+      : insight({ tag: 'Today', title: 'Sam checked in at 3:34', left: 'Pickup around 6:30', btn: 'Calendar', action: 'tab', data: 'data-tab="calendar"' });
+    return top + `<section class="group r" style="--i:1"><h2>Sam this season</h2><div class="rings">${ringTile(0.71, '71%', '<b>42.5</b> hours', 'var(--green)')}${ringTile(0.73, '22', 'tasks done', '#F2B81F')}${ringTile(0.94, '94%', 'meetings', '#16201B')}</div></section>` + sectionsHTML(comp ? GENERIC.parent.homeComp : GENERIC.parent.home, 2);
+  }
+  if (r === 'mentor') {
+    const top = comp
+      ? insight({ tag: 'Strategy', title: 'Pre-match brief is ready', text: 'Qual 14 in 18 min · built from 6 scouts', left: 'Red alliance', btn: 'Open brief', action: 'toast', data: 'data-msg="Opens the brief (demo)"' })
+      : insight({ tag: 'In the shop', title: '18 of 34 members are here', left: '8 things waiting on you', btn: 'Review', action: 'go', data: 'data-tab="admin" data-sub="approvals"' });
+    return top + `<section class="group r" style="--i:1"><h2>Here by subteam</h2><div class="rings">${ringTile(0.7, '7', 'Mechanical', 'var(--green)')}${ringTile(0.5, '4', 'Programming', '#F2B81F')}${ringTile(0.6, '3', 'Electrical', '#16201B')}</div></section>
+      <section class="group r" style="--i:2"><div class="group-head"><h2>Waiting on you</h2><button type="button" class="link" data-action="go" data-tab="admin" data-sub="approvals">View all</button></div><div class="list">${NOTIFS.needs.map(n => `<button type="button" class="row" ${n.task ? `data-action="open-task" data-id="${n.task}"` : ''}>${avatar(n.who, 'lg')}<span class="txt"><span class="mt" style="color:var(--text)">${n.text}</span><span class="mt" style="font-size:12px;color:var(--text-3)">${n.when}</span></span><span class="chev">${icon('chev', 16)}</span></button>`).join('')}</div></section>`
+      + insight({ cls: 'gold', tag: 'Inventory', title: `${low.length} parts are running low`, text: 'Mostly 8-32 and 10-32 bolts.', left: 'Shop › Inventory', btn: 'View', action: 'go', data: 'data-tab="shop" data-sub="inventory"' }).replace('--i:0', '--i:3');
+  }
+  const mine = filteredTasks('mine');
+  const ck = state.checkedIn;
+  let out;
+  if (comp) out = insight({ tag: 'Your shift · in 14 min', title: 'Scouting Red 2', text: 'Qual 12 to 18 · works offline', left: '0 waiting to sync', btn: 'Start', action: 'toast', data: 'data-msg="Opens the scouting form (demo)"' });
+  else out = insight({ tag: 'Today', title: ck ? "You're checked in" : 'Build meeting at 3:30', left: ck ? '9.5 h this week' : 'Shop · until 6:30', btn: ck ? 'Check out' : 'Check in', action: 'check' });
+  out += `<section class="group r" style="--i:1"><div class="group-head"><h2>Due soon</h2><button type="button" class="link" data-action="go" data-tab="tasks" data-sub="mine">View all</button></div><div class="list">${mine.slice(0, 3).map(todayRow).join('')}</div></section>`;
+  out += `<section class="group r" style="--i:2"><h2>Your season</h2><div class="rings">${ringTile(0.71, '71%', '<b>42.5</b> hours', 'var(--green)')}${ringTile(1, '#1', '<b>142</b> points', '#F2B81F')}${ringTile(0.73, '22', 'tasks done', '#16201B')}</div></section>`;
+  if (!comp) out += insight({ cls: 'gold', tag: 'Inventory', title: `${low.length} parts are running low`, text: 'Mostly 8-32 and 10-32 bolts. Ask a lead to order them.', left: 'Shop › Inventory', btn: 'View', action: 'go', data: 'data-tab="shop" data-sub="inventory"' }).replace('--i:0', '--i:3');
+  out += sectionsHTML([{ label: 'Announcements', items: [['Kickoff watch party', 'Sat Jan 9 · 9:00 AM · commons', 'New', 'gold'], ['Safety glasses on in the shop', 'Pinned by Coach Lee', '', '']] }], 4);
+  return out;
+}
+
+function inventoryHTML() {
+  const cats = ['All', 'Bolts & nuts', 'Mechanical', 'Electrical', 'Tools', 'Supplies'];
+  const q = state.invQuery.toLowerCase();
+  const list = PARTS.filter(p => (state.invCat === 'All' || p.cat === state.invCat) && (!q || (p.name + p.place + (p.sku || '')).toLowerCase().includes(q)));
+  const low = PARTS.filter(isLow);
+  const tile = (p) => `<button type="button" class="ptile" data-action="open-part" data-id="${p.id}" data-name="${(p.name + ' ' + p.place + ' ' + (p.sku || '')).toLowerCase().replace(/"/g, '')}"><span class="img">${partArt(p, 116)}<span class="qty${p.qty === 0 ? ' out' : isLow(p) ? ' low' : ''}"><i></i>${p.qty} ${p.unit || 'pcs'}</span></span><span class="pn">${p.name}</span><span class="pp">${p.place}</span></button>`;
+  return `<div class="invmeta r" style="--i:0"><span>93 parts across 6 places</span><span class="sync">Synced</span></div>
+    <div class="searchrow r" style="--i:0"><input id="invq" class="search" type="search" placeholder="Search parts, bins, sizes…" aria-label="Search parts" value="${state.invQuery.replace(/"/g, '')}"><button type="button" class="iconbtn" aria-label="Scan a part" data-action="toast" data-msg="Opens the camera to scan a bin label (demo)">${icon('scan', 20)}</button></div>
+    <div class="toolbar r" style="--i:1">${cats.map(c => `<button type="button" class="fbtn${state.invCat === c ? ' on' : ''}" data-action="invcat" data-c="${c}">${c}<span class="n">${c === 'All' ? PARTS.length : PARTS.filter(p => p.cat === c).length}</span></button>`).join('')}</div>
+    ${state.invCat === 'All' && !q ? `<section class="group lowsec r" style="--i:2"><div class="group-head"><h2>Running low</h2><button type="button" class="link" data-action="low-order">Order all ${low.length}</button></div><div class="lowrow">${low.map(p => `<button type="button" class="lowcard" data-action="open-part" data-id="${p.id}"><span class="thumb">${partArt(p, 54)}</span><span><b>${p.name}</b><span class="lw">${p.qty} left · want ${p.want}</span></span></button>`).join('')}</div></section>` : ''}
+    <section class="group r" style="--i:3"><div class="group-head"><h2>${state.invCat === 'All' ? 'All parts' : state.invCat}</h2><span class="count-line" id="pcount" style="margin:0">${list.length} parts</span></div><div class="pgrid">${list.map(tile).join('')}</div></section>
+    <button type="button" class="btn btn-outline r" style="--i:4" data-action="toast" data-msg="Opens Add a part: photo, name, place, count (demo)">${icon('plus', 18)} Add a part</button>`;
+}
+
+function placesHTML() {
+  return `<p class="count-line r" style="--i:0;margin:-6px 0 0">Where things live in the shop</p>
+    <div class="list r" style="--i:1">${PLACES.map(([n, d, c]) => `<button type="button" class="row" data-action="place" data-place="${n}"><span class="ticon">${icon('pin', 20)}</span><span class="txt"><span class="ttl">${n}</span><span class="mt">${d}</span></span><span class="when">${c}<span>parts</span></span></button>`).join('')}</div>`;
+}
+
+function shopHTML() {
+  const sub = state.sub.shop;
+  if (sub === 'inventory') return inventoryHTML();
+  if (sub === 'places') return placesHTML();
+  if (sub === 'orders') {
+    const fl = [['open', 'Open'], ['0', 'Awaiting approval'], ['1', 'Approved'], ['2', 'Placed'], ['3', 'Shipped'], ['4', 'Received']];
+    const list = ORDERS.filter(o => state.orderFilter === 'open' ? o.step < 4 : String(o.step) === state.orderFilter);
+    return `<button type="button" class="btn btn-gold r" style="--i:0" data-action="sheet" data-sheet="neworder">${icon('plus', 18)} New order request</button>
+      <div class="toolbar r" style="--i:1">${fl.map(([id, l]) => `<button type="button" class="fbtn${state.orderFilter === id ? ' on' : ''}" data-action="ofilter" data-f="${id}">${l}</button>`).join('')}</div>
+      <div class="count-line r" style="--i:1">${list.length} order${list.length === 1 ? '' : 's'}</div>
+      ${list.map((o, n) => orderCard(o, 2 + n)).join('') || '<div class="note" style="padding:40px 0">No orders here.</div>'}`;
+  }
+  return `<div class="tiles r" style="--i:0"><div class="tile"><b style="color:var(--green-hi)">2</b><span>Ready to use</span></div><div class="tile"><b>1</b><span>Charging</span></div></div>
+    ${BATTERIES.map(([id, st, tone, v, cyc, note], n) => `<div class="ocard r" style="--i:${1 + n}"><div class="oh"><span class="on" style="font-size:22px;font-weight:800">${id}</span>${badge(st, tone)}</div>
+      <div class="facts" style="grid-template-columns:repeat(3,minmax(0,1fr));box-shadow:none"><div><span>Voltage</span><b>${v}</b></div><div><span>Cycles</span><b style="${cyc > 100 ? 'color:var(--warn)' : ''}">${cyc}</b></div><div><span>Status</span><b>${st}</b></div></div>
+      <span class="om">${note}</span></div>`).join('')}`;
+}
+
+function partPage(p) {
+  const status = p.qty === 0 ? ['Out of stock', 'var(--warn)'] : isLow(p) ? ['Running low', '#B07A00'] : ['In good shape', 'var(--green-hi)'];
+  const acc = state.acc[p.id] || 'Good';
+  const accs = [['Perfect', '#1F9D57'], ['Good', '#3C7DD9'], ['Rough', '#EFA91A'], ['Way off', '#E5533D']];
+  const place = PLACES.find(x => x[0] === p.place);
+  return `<div class="pagewrap">${pageBar('Inventory', '')}<main>
+    <div class="pimg">${partArt(p, 210)}<span class="photos">${icon('image', 14)} 3 photos</span></div>
+    <div class="stack" style="gap:6px"><span class="catlbl">${p.cat}</span><h1 class="dt-title">${p.name}</h1>${p.sku ? `<span class="mt">${p.sku}</span>` : ''}</div>
+    <section class="stock">
+      <div class="split" style="display:flex;justify-content:space-between"><span class="mt">In stock</span><span class="mt">Alert under ${p.want}</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="num">${p.qty}<small> ${p.unit || 'pcs'}</small></span>
+        <div class="stepper"><button type="button" data-action="qty" data-id="${p.id}" data-d="-1" aria-label="Took one">−</button><button type="button" class="one" data-action="qty" data-id="${p.id}" data-d="1">+1</button><button type="button" data-action="qty" data-id="${p.id}" data-d="10" aria-label="Add ten" style="font-size:14px">+10</button></div></div>
+      <span class="status" style="color:${status[1]}">${status[0]}</span>
+      <div class="stack" style="gap:8px"><span class="mt">How accurate is this count?</span><div class="acc">${accs.map(([l, c]) => `<button type="button" data-action="acc" data-id="${p.id}" data-v="${l}" aria-pressed="${acc === l}"><i style="background:${c}"></i>${l}</button>`).join('')}</div></div>
+    </section>
+    ${isLow(p) ? `<button type="button" class="btn btn-gold" data-action="toast" data-msg="Added ${p.want - p.qty} ${p.unit || 'pcs'} to an order request (demo)">${icon('plus', 18)} Add ${p.want - p.qty} to an order request</button>` : ''}
+    <section class="group"><h2>Where it lives</h2><div class="list"><div class="rowx"><span class="ticon">${icon('pin', 20)}</span><span class="txt"><span class="ttl">${p.place}</span><span class="mt">${place ? place[1] : ''}</span></span></div></div></section>
+    <section class="group"><h2>Used on</h2><div class="list">${todayRow(taskById('t2'))}</div></section>
+    <section class="group"><h2>History</h2><div class="activity">
+      <div><span><b>Diego Ruiz</b> took 6 · <span>2 days ago</span></span></div>
+      <div><span><b>Sam Rivera</b> counted it as <b>${acc}</b> · <span>last week</span></span></div>
+      <div><span><b>Leo Park</b> added it to <b>${p.place}</b> · <span>last month</span></span></div>
+    </div></section>
+  </main></div>`;
+}
+
+function teamHTML() {
+  const sub = state.sub.team;
+  if (sub === 'members') {
+    return `<input class="search r" style="--i:0;flex:none" type="search" placeholder="Search people" aria-label="Search people">
+      <div class="toolbar r" style="--i:1">${['Everyone', 'Here now · 18', 'Electrical', 'Mechanical', 'Programming', 'CAD / Design', 'Leads'].map((c, n) => `<span class="fbtn${n === 0 ? ' on' : ''}">${c}</span>`).join('')}</div>
+      <div class="list r" style="--i:2">${MEMBERS.map(m => `<button type="button" class="row">${avatar(m.i, 'lg')}<span class="txt"><span class="ttl">${m.n}${m.you ? ' <span style="color:var(--text-3);font-weight:500">(you)</span>' : ''}</span><span class="mt">${m.role} · ${m.team}</span></span><span class="when">${m.open} open<span>${m.done} done</span></span></button>`).join('')}</div>`;
+  }
+  if (sub === 'hours') {
+    const segs = [['Build', 30.5, '#1F9D57'], ['Outreach', 6, '#16201B'], ['Competition', 4, '#F2B81F'], ['Meetings', 2, '#C9CEC9']];
+    const sessions = [['Tue Nov 24', 'Checked in 3:34 PM', 'Now', 'green'], ['Sat Nov 21', '10:02 AM – 4:11 PM', '6.2 h', ''], ['Thu Nov 19', '3:31 – 6:40 PM', '3.2 h', ''], ['Tue Nov 17', '3:40 – 6:30 PM', '2.8 h', ''], ['Sat Nov 14', 'Forgot to check out', 'Fix', 'warn']];
+    return `<section class="hero r" style="--i:0"><span class="h" style="font-size:20px">Season hours</span>${gaugeHTML(segs, 42.5)}
+        <div class="legend">${segs.map(([l, v, c]) => `<span><i style="background:${c}"></i>${l} · <b>${v} h</b></span>`).join('')}</div></section>
+      <section class="hero r" style="--i:1;gap:10px"><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600"><span>Lettering goal</span><span style="color:var(--text-3)">42.5 of 60 h</span></div><div class="bar"><i style="width:71%"></i></div><span class="mt">17.5 hours to go · about 6 more meetings</span></section>
+      <button type="button" class="btn btn-outline r" style="--i:2">${icon('plus', 18)} Log outreach hours</button>
+      ${sectionsHTML([{ label: 'Recent sessions', items: sessions }], 3)}`;
+  }
+  return sectionsHTML(GENERIC.calendar);
+}
+
+function quickSheetHTML() {
+  const acts = [
+    ['quick-check', 'clock', state.checkedIn ? 'Check out' : 'Check in', 'Log your shop hours'],
+    ['quick-scan', 'scan', 'Scan a part', 'Count or take from a bin'],
+    ['quick-sheet', 'tasks', 'New task', 'Post it to the board', 'newtask'],
+    ['quick-sheet', 'shop', 'Order request', 'Ask a mentor to buy', 'neworder']
+  ];
+  return `<div class="sheet-wrap${state.sheetNew ? ' new' : ''}"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Quick actions"><div class="handle"></div><div class="sh"><h2>Quick actions</h2><button type="button" class="link" data-action="close-sheet">Close</button></div>
+    <div class="sb" style="padding-bottom:34px"><div class="qa">${acts.map(([a, ic, t, s, sh]) => `<button type="button" data-action="${a}"${sh ? ` data-sheet="${sh}"` : ''}><span class="ticon">${icon(ic, 20)}</span><div>${t}<br><span>${s}</span></div></button>`).join('')}</div></div></div></div>`;
+}
+
+function render(anim = '1') {
+  app.dataset.anim = anim;
+  let html;
+  if (!state.signedIn) html = loginHTML();
+  else {
+    const top = state.stack[state.stack.length - 1];
+    let screen;
+    if (!top) screen = sectionScreen();
+    else if (top.type === 'task') screen = taskPage(taskById(top.id));
+    else if (top.type === 'part') screen = partPage(partById(top.id));
+    else if (top.type === 'notifs') screen = notifsPage();
+    else screen = profilePage();
+    html = screen + tabbarHTML() + (state.sheet === 'quick' ? quickSheetHTML() : state.sheet ? sheetHTML() : '');
+  }
+  if (state.toast) html += `<div class="toast" role="status">${state.toast}</div>`;
+  app.innerHTML = html;
+  state.sheetNew = false;
+  state.toast = '';
+  document.querySelectorAll('#jump button').forEach(b => {
+    const r = b.dataset.role;
+    b.setAttribute('aria-pressed', String(r === 'login' ? !state.signedIn : state.signedIn && state.role === r));
+  });
+  document.getElementById('compSwitch').setAttribute('aria-checked', String(state.comp));
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const d = el.dataset;
+  switch (d.action) {
+    case 'quick': state.sheet = 'quick'; state.sheetNew = true; keepScroll(() => render('0')); break;
+    case 'quick-check': state.checkedIn = !state.checkedIn; state.sheet = null; state.toast = state.checkedIn ? 'Checked in at 3:34 PM' : 'Checked out · 3.0 h logged'; keepScroll(() => render('0')); break;
+    case 'quick-scan': state.sheet = null; state.toast = 'Opens the camera to scan a bin label (demo)'; keepScroll(() => render('0')); break;
+    case 'quick-sheet': state.sheet = d.sheet; state.sheetNew = true; keepScroll(() => render('0')); break;
+    case 'open-part': state.stack.push({ type: 'part', id: d.id }); render('page'); scrollTop(); break;
+    case 'qty': { const p = partById(d.id); p.qty = Math.max(0, p.qty + Number(d.d)); keepScroll(() => render('0')); break; }
+    case 'acc': state.acc[d.id] = d.v; keepScroll(() => render('0')); break;
+    case 'invcat': state.invCat = d.c; state.invQuery = ''; keepScroll(() => render('0')); break;
+    case 'low-order': state.toast = `Order request for ${PARTS.filter(isLow).length} low parts sent to mentors (demo)`; keepScroll(() => render('0')); break;
+    case 'place': state.invCat = 'All'; state.invQuery = d.place; state.sub.shop = 'inventory'; render(); scrollTop(); break;
+  }
+});
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'invq') return;
+  state.invQuery = e.target.value;
+  const q = state.invQuery.toLowerCase().trim();
+  let n = 0;
+  app.querySelectorAll('.ptile').forEach(t => { const show = !q || t.dataset.name.includes(q); t.style.display = show ? '' : 'none'; if (show) n++; });
+  app.querySelectorAll('.lowsec').forEach(s => { s.style.display = q ? 'none' : ''; });
+  const c = app.querySelector('#pcount'); if (c) c.textContent = `${n} part${n === 1 ? '' : 's'}`;
+});
+
+render();
+</script>
+</body>
+</html>
