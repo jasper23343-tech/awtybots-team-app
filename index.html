@@ -361,54 +361,76 @@ body { background: #050505; }
 .a-stats .n small { font-size: 16px; color: #6E6E69; letter-spacing: 0; }
 .a-stats .bar { height: 4px; }
 
-/* ===== Motion, iOS style: depth for navigation, quiet everywhere else ===== */
-:root { --ios: cubic-bezier(0.32, 0.72, 0, 1); }
-[data-anim] .r, [data-anim] .pagewrap, [data-anim] .bar i, .subtab[aria-selected="true"]::after, .tab[aria-current="page"] .pill { animation: none !important; }
-button { -webkit-tap-highlight-color: transparent; transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.2s ease; }
-button:active { transform: scale(0.97); }
-.row:active, .a-due-row:active, .check:active { transform: none; background: rgba(255,255,255,0.05); }
-.tab:active, .subtab:active { transform: none; opacity: 0.6; }
-.sheet-wrap.new .sheet { animation: iosSheetUp 0.5s var(--ios) both; }
-.sheet-wrap.new .scrim { animation: iosFade 0.35s ease both; }
-.toast { animation: iosToast 2.6s var(--ios) both; }
-@keyframes iosSheetUp { from { transform: translateY(100%); } }
-@keyframes iosFade { from { opacity: 0; } }
-@keyframes iosToast { 0% { opacity: 0; transform: translate(-50%, 16px) scale(0.96); } 10%, 88% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, 0) scale(0.98); } }
-
-#app { view-transition-name: screen; }
-.pagewrap { view-transition-name: page; }
-.tabs { view-transition-name: tabbar; }
-.sheet { view-transition-name: sheet; }
-.scrim { view-transition-name: scrim; }
-::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-::view-transition-group(*) { animation-duration: 0.5s; animation-timing-function: var(--ios); }
-::view-transition-old(tabbar), ::view-transition-new(tabbar) { animation: none; }
-html[data-vt="push"]::view-transition-new(page) { animation: iosInRight 0.5s var(--ios) both; }
-html[data-vt="push"]::view-transition-old(page), html[data-vt="push"]::view-transition-old(screen) { animation: iosOutLeft 0.5s var(--ios) both; }
-html[data-vt="push"]::view-transition-new(screen) { animation: none; }
-html[data-vt="back"]::view-transition-old(page) { animation: iosOutRight 0.42s var(--ios) both; }
-html[data-vt="back"]::view-transition-new(page), html[data-vt="back"]::view-transition-new(screen) { animation: iosInLeft 0.42s var(--ios) both; }
-html[data-vt="back"]::view-transition-old(screen) { animation: none; opacity: 0; }
-html[data-vt="fade"]::view-transition-old(screen) { animation: iosFadeOut 0.16s ease both; }
-html[data-vt="fade"]::view-transition-new(screen) { animation: iosFade 0.2s ease 0.04s both; }
-html[data-vt="sheet-close"]::view-transition-old(sheet) { animation: iosSheetDown 0.34s var(--ios) both; }
-html[data-vt="sheet-close"]::view-transition-old(scrim) { animation: iosFadeOut 0.28s ease both; }
-html[data-vt="sheet-close"]::view-transition-old(screen), html[data-vt="sheet-close"]::view-transition-new(screen) { animation: none; }
-@keyframes iosInRight { from { transform: translateX(42%); opacity: 0; } }
-@keyframes iosOutLeft { to { transform: translateX(-24%); opacity: 0.35; } }
-@keyframes iosOutRight { to { transform: translateX(42%); opacity: 0; } }
-@keyframes iosInLeft { from { transform: translateX(-24%); opacity: 0.35; } }
-@keyframes iosFadeOut { to { opacity: 0; } }
-@keyframes iosSheetDown { to { transform: translateY(100%); } }
-@media (max-width: 960px) {
-  @keyframes iosInRight { from { transform: translateX(100%); } }
-  @keyframes iosOutRight { to { transform: translateX(100%); } }
+/* ===== Motion v5: short, quiet, interruptible. Tokens first, then uses. ===== */
+:root {
+  color-scheme: dark;
+  --t-press: 110ms; --t-hover: 150ms; --t-std: 200ms; --t-nav: 260ms; --t-sheet: 380ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* gentle spring, about 2% overshoot (vawe.dev style linear() curve) */
+  --spring: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%, 1.001 85.9%, 1);
 }
-@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+/* the old staggered entrance stays off: content shows up at once */
+[data-anim] .r, [data-anim] .bar i { animation: none; }
+.tab[aria-current="page"] .pill { animation: none; }
 
-/* No animations anywhere */
-*, *::before, *::after { animation: none !important; transition: none !important; }
-button:active { transform: none !important; }
+/* press feedback: never delays the action */
+button { -webkit-tap-highlight-color: transparent; transition: transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease, border-color var(--t-hover) ease, color var(--t-hover) ease, opacity var(--t-hover) ease; }
+button:active:not(:disabled) { transform: scale(0.97); }
+.btn:active:not(:disabled), .tcard:active, .row:active, .check:active, .pf-btn:active { transform: scale(0.985); }
+.switch .knob { transition: transform var(--t-std) var(--spring); }
+.subtab[aria-selected="true"]::after { animation: pop var(--t-std) var(--ease-out); }
+
+/* navigation: pushing a page slides it in a little; going back is instant */
+#app[data-anim="page"] .pagewrap { animation: v5In var(--t-nav) var(--ease-out) both; }
+@keyframes v5In { from { opacity: 0; transform: translateX(28px); } }
+
+/* sheets: rise on a soft spring, the scrim fades */
+.sheet { animation: v5Sheet var(--t-sheet) var(--spring) both; }
+.scrim { animation: v5Fade var(--t-std) ease both; }
+@keyframes v5Sheet { from { transform: translateY(100%); } }
+@keyframes v5Fade { from { opacity: 0; } }
+
+/* inline calendar opens downward */
+.cal { animation: v5Drop var(--t-std) var(--ease-out) both; transform-origin: top center; }
+@keyframes v5Drop { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
+
+.toast { animation: v5Toast 2.4s var(--ease-out) both; }
+@keyframes v5Toast { 0% { opacity: 0; transform: translate(-50%, 12px); } 8%, 90% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 0); } }
+
+number-flow { font-variant-numeric: tabular-nums; --number-flow-mask-height: 0.2em; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } button:active { transform: none !important; } }
+
+/* ===== Taskboard v5 controls (replace native select, date and number inputs) ===== */
+.alist { display: flex; flex-direction: column; gap: inherit; }
+.fgroup { display: flex; flex-direction: column; gap: 10px; }
+.fgroup > .k, .field > label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); font-family: var(--mono); }
+.opt .pd { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.field.err input { border-color: var(--warn); }
+.ferr { font-size: 13px; color: var(--warn); }
+.pf-btn { width: 100%; min-height: 50px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--card); color: var(--text); text-align: left; font-size: 15px; }
+.pf-btn[aria-expanded="true"] { border-color: var(--gold); }
+.pf-btn .i { color: var(--gold); }
+.pf-btn .pf-sub { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.cal { border: 1px solid var(--line-2); background: var(--card); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.cal-quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; }
+.cal-head b { font-size: 15px; font-weight: 600; }
+.cal-nav { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line-2); background: none; color: var(--text); display: flex; align-items: center; justify-content: center; }
+.cal-nav:disabled { opacity: 0.3; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-grid .dow { font-family: var(--mono); font-size: 11px; color: var(--text-3); padding: 4px 0 6px; }
+.cal-grid button { aspect-ratio: 1; max-height: 42px; border: none; border-radius: 10px; background: none; color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums; }
+.cal-grid button.out { color: var(--text-3); opacity: 0.45; }
+.cal-grid button:disabled { color: var(--text-3); opacity: 0.25; }
+.cal-grid button.today { box-shadow: inset 0 0 0 1px var(--line-2); }
+.cal-grid button.sel { background: var(--gold); color: var(--gold-ink); font-weight: 600; }
+.stepper { display: flex; align-items: center; min-height: 50px; border: 1px solid var(--line-2); background: var(--card); border-radius: 12px; overflow: hidden; }
+.stepper button { width: 50px; align-self: stretch; border: none; background: none; color: var(--text); font-size: 20px; }
+.stepper button:disabled { opacity: 0.3; }
+.stepper output { flex: 1; text-align: center; font-size: 16px; font-weight: 600; }
+.status-note { font-size: 14px; color: var(--text-2); text-align: center; padding: 6px 0; }
+
 </style>
 </head>
 <body>
@@ -447,6 +469,7 @@ button:active { transform: none !important; }
   </div>
 </div>
 
+<script src="vendor/awty-libs.js"></script>
 <script>
 /* ---------------- icons ---------------- */
 const ICONS = {
@@ -1006,8 +1029,8 @@ function render(anim = '1') {
     else screen = profilePage();
     html = screen + tabbarHTML() + (state.sheet ? sheetHTML() : '');
   }
-  if (state.toast) html += `<div class="toast" role="status">${state.toast}</div>`;
-  app.innerHTML = html;
+  if (state.toast) html += `<div class="toast" id="toast-${Date.now()}" role="status">${state.toast}</div>`;
+  morphApp(html);
   state.sheetNew = false;
   state.toast = '';
   document.querySelectorAll('#jump button').forEach(b => {
@@ -1119,7 +1142,7 @@ render = function (anim = '1') {
   else if (key !== lastKey && lastKey) kind = 'fade';
   lastDepth = depth; lastSheet = sheet; lastKey = key;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (true) { v2Render('0'); return; } // animations turned off
+  v2Render(kind === 'push' ? 'page' : '0'); afterRender(); return; // View Transitions stay off
   const m = app.querySelector('main'), y = m ? m.scrollTop : 0;
   document.documentElement.dataset.vt = kind;
   const t = document.startViewTransition(() => {
@@ -1128,6 +1151,241 @@ render = function (anim = '1') {
   });
   t.finished.finally(() => { if (document.documentElement.dataset.vt === kind) delete document.documentElement.dataset.vt; });
 };
+
+/* ===== Taskboard v5: DOM patching, NumberFlow, AutoAnimate, real forms ===== */
+/* render patches the DOM with idiomorph instead of replacing it, so elements live on between renders.
+   That is what lets AutoAnimate see list changes and NumberFlow roll from the old value to the new one. */
+function morphApp(html) {
+  if (window.Idiomorph) Idiomorph.morph(app, html, { morphStyle: 'innerHTML', ignoreActiveValue: true });
+  else app.innerHTML = html;
+}
+const aaDone = new WeakSet();
+const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+function afterRender() {
+  if (window.autoAnimate) app.querySelectorAll('[data-aa]').forEach(el => {
+    if (aaDone.has(el)) return; aaDone.add(el); autoAnimate(el, { duration: 220, easing: EASE });
+  });
+  app.querySelectorAll('number-flow[data-v]').forEach(el => {
+    const v = +el.dataset.v;
+    if (!el._awty) {
+      el._awty = true;
+      el.transformTiming = { duration: 420, easing: EASE }; el.spinTiming = { duration: 420, easing: EASE }; el.opacityTiming = { duration: 180, easing: 'ease-out' };
+      el.update(v);
+    } else if (el.value !== v) el.update(v);
+  });
+}
+const nf = (key, v) => `<number-flow id="nf-${key}" data-v="${v}"></number-flow>`;
+
+/* dates: the prototype lives on Tue 24 Nov 2026 to match the header */
+const TODAY = new Date(2026, 10, 24);
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dateOf = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const daysUntil = (d) => Math.round((d - TODAY) / 864e5);
+const inWords = (n) => n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`;
+const svg = (p, s = 18) => `<svg class="i" viewBox="0 0 24 24" style="width:${s}px;height:${s}px" aria-hidden="true">${p}</svg>`;
+const CHEV_L = '<path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+const CHEV_R = '<path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+
+const me = () => state.role === 'mentor' ? { i: 'CL', n: 'Coach Lee' } : byI.SR;
+const PTS_BY_DIFF = { 'Easy': 3, 'Semi-difficult': 5, 'Difficult': 8, 'Extra difficult': 13 };
+const SUBTEAMS = ['Electrical', 'Mechanical', 'Programming', 'CAD / Design', 'Fabrication', 'Awards', 'No subteam'];
+
+/* cards and lists get stable ids so the patcher (and AutoAnimate) can follow them */
+const v2TaskCard = taskCard;
+taskCard = function (t, i) { return v2TaskCard(t, i).replace(/^(\s*)<([a-z]+)/, `$1<$2 id="tc-${t.id}"`); };
+
+tasksHTML = function () {
+  const sub = state.sub.tasks;
+  if (sub === 'leaders') return leaderboardHTML();
+  const list = filteredTasks(sub);
+  let out = `<button type="button" class="btn btn-gold" data-action="sheet" data-sheet="newtask">${icon('plus', 18)} New task</button>`;
+  if (sub === 'board') {
+    const f = state.filters, active = [];
+    if (f.status !== 'open') active.push(['status', f.status === 'all' ? 'All statuses' : STATUS[f.status][0]]);
+    if (f.prio !== 'all') active.push(['prio', PRIO[f.prio][0]]);
+    if (f.team !== 'all') active.push(['team', f.team]);
+    if (f.sort !== 'due') active.push(['sort', { hard: 'Hardest first', easy: 'Easiest first', prio: 'By priority' }[f.sort]]);
+    out += `<div class="toolbar" id="tb-tools" data-aa><button type="button" id="fb-main" class="fbtn${active.length ? ' on' : ''}" data-action="sheet" data-sheet="filters">${icon('filter', 16)} Filters${active.length ? ' · ' + active.length : ''}</button>
+      ${active.map(([k, l]) => `<button type="button" id="fb-${k}" class="fbtn" data-action="clear-filter" data-key="${k}">${l} <span class="x">×</span></button>`).join('')}
+      ${active.length ? '' : '<span id="fb-none" class="fbtn" style="border-style:dashed;color:var(--text-3)">Open tasks · due date</span>'}</div>`;
+  }
+  out += `<div class="count-line">${nf('taskcount', list.length)} task${list.length === 1 ? '' : 's'}${sub === 'grabs' ? ' with open spots' : sub === 'mine' ? ' assigned to you' : ' matching your filters'}</div>`;
+  out += `<div class="alist" id="tasklist" data-aa>${list.map((t, n) => taskCard(t, 2 + n)).join('') || `<div class="note" id="tl-empty" style="padding:40px 0">Nothing here. Try clearing a filter.</div>`}</div>`;
+  return out;
+};
+
+/* task page: status buttons, comments and activity now work */
+const v2TaskPage = taskPage;
+taskPage = function (t) {
+  t.log = t.log || [];
+  let html = v2TaskPage(t);
+  const base = t.pts, mult = t.days >= 7 ? 2 : t.days >= 3 ? 1.5 : t.days >= 1 ? 1.25 : t.days < 0 ? 0.5 : 1;
+  const earned = Math.round(base * mult * 100) / 100;
+  const mine = isMine(t);
+  let actions;
+  const B = (cls, to, label) => `<button type="button" class="btn ${cls}" data-action="tstatus" data-id="${t.id}" data-to="${to}">${label}</button>`;
+  if (t.status === 'done') actions = `<div class="status-note">Done${t.awarded ? ` · ${t.awarded} pts awarded` : ''}</div>`;
+  else if (state.role === 'mentor') actions = (t.status === 'review' || t.status === 'look')
+    ? `<div class="btn-row">${B('btn-outline', 'progress', 'Send back')}${B('btn-green', 'done', `Approve · ${earned} pts`)}</div>`
+    : `<div class="status-note">Nothing to approve yet</div>`;
+  else if (mine) actions = t.status === 'todo' ? B('btn-gold', 'progress', 'Start working')
+    : t.status === 'review' ? `<div class="status-note">Waiting on a lead to review</div>`
+    : `<div class="btn-row">${t.status === 'look' ? '' : B('btn-outline', 'look', 'Ask for a look')}${B('btn-gold', 'review', 'Submit for review')}</div>`;
+  else actions = null; // keep join / ask button
+  if (actions !== null) html = html.replace(/(<div class="step-labels">[\s\S]*?<\/div>)\s*[\s\S]*?(\s*<\/div><\/section>)/, `$1\n      ${actions}$2`);
+  // points number rolls with NumberFlow
+  html = html.replace(/<span class="big gold" style="font-size:40px">[^<]*<\/span>/, `<span class="big gold" style="font-size:40px">${nf('pts-' + t.id, earned)}</span>`);
+  // checklist counter
+  const done = t.checklist.filter(c => c[1]).length;
+  html = html.replace(`<h2>Checklist · ${done}/${t.checklist.length}</h2>`, `<h2>Checklist · ${nf('cl-' + t.id, done)}/${t.checklist.length}</h2>`);
+  // comments list + working composer
+  html = html.replace(/(<section class="group"><h2>Comments · )\d+(<\/h2>)\s*([\s\S]*?)(<div class="composer">)[\s\S]*?<\/div>\s*<\/section>/, (m, a, b, list) =>
+    `${a}${t.comments.length}${b}<div class="alist" id="comments-${t.id}" data-aa style="gap:12px">${list}</div>
+      <form class="composer" data-comment="${t.id}"><input class="search" name="c" placeholder="Write a comment" aria-label="Write a comment" autocomplete="off"><button type="button" class="iconbtn" aria-label="Attach image">${icon('image', 18)}</button><button type="submit" class="iconbtn" style="background:var(--gold);color:var(--gold-ink);border:none" aria-label="Post comment">${icon('send', 18)}</button></form>
+    </section>`);
+  // activity: new events on top
+  html = html.replace('<div class="activity">', `<div class="activity" id="act-${t.id}" data-aa>${t.log.map((l, n) => `<div id="log-${t.id}-${t.log.length - n}"><span><b>${l[0]}</b> ${l[1]} · <span>just now</span></span></div>`).join('')}`);
+  return html;
+};
+
+/* new task / new order sheets: chips instead of dropdowns, dark calendar, steppers */
+const v2Sheet = sheetHTML;
+function formFor(kind) {
+  if (state.formKind !== kind) {
+    state.formKind = kind; state.calOpen = false; state.formErr = '';
+    state.form = kind === 'newtask'
+      ? { title: '', desc: '', prio: 'high', diff: 'Semi-difficult', team: byI.SR.team, due: isoOf(addDays(TODAY, 14)), cap: 2, robot: 'No robot' }
+      : { item: '', link: '', vendor: VENDORS[0], qty: 1, price: '', why: '' };
+    const d = dateOf(state.form.due || isoOf(TODAY)); state.calMonth = [d.getFullYear(), d.getMonth()];
+  }
+  return state.form;
+}
+const optGroup = (label, key, opts) => `<div class="fgroup"><span class="k">${label}</span><div class="chips">${opts.map(([v, l]) => `<button type="button" class="opt" data-action="fset" data-key="${key}" data-val="${v}" aria-pressed="${state.form[key] === v}">${l}</button>`).join('')}</div></div>`;
+const stepper = (key, label, min, max) => `<div class="fgroup"><span class="k">${label}</span><div class="stepper"><button type="button" data-action="fstep" data-key="${key}" data-d="-1" aria-label="Less" ${state.form[key] <= min ? 'disabled' : ''}>−</button><output>${nf('st-' + key, state.form[key])}</output><button type="button" data-action="fstep" data-key="${key}" data-d="1" aria-label="More" ${state.form[key] >= max ? 'disabled' : ''}>+</button></div></div>`;
+const textField = (key, label, ph, area) => `<div class="field${state.formErr && key === state.formErrKey ? ' err' : ''}"><label for="ff-${key}">${label}</label>${area
+  ? `<textarea id="ff-${key}" data-f="${key}" placeholder="${ph}">${state.form[key]}</textarea>`
+  : `<input id="ff-${key}" data-f="${key}" placeholder="${ph}" value="${String(state.form[key]).replace(/"/g, '&quot;')}" autocomplete="off">`}</div>`;
+
+function calendarHTML() {
+  const sel = state.form.due, [y, m] = state.calMonth;
+  const first = new Date(y, m, 1), start = addDays(first, -first.getDay());
+  const minMonth = y === TODAY.getFullYear() && m === TODAY.getMonth();
+  let cells = DOW.map(d => `<span class="dow">${d[0]}</span>`).join('');
+  for (let n = 0; n < 42; n++) {
+    const d = addDays(start, n), iso = isoOf(d);
+    const cls = [d.getMonth() !== m && 'out', iso === isoOf(TODAY) && 'today', iso === sel && 'sel'].filter(Boolean).join(' ');
+    cells += `<button type="button" class="${cls}" data-action="cal-pick" data-val="${iso}" ${d < TODAY ? 'disabled' : ''} aria-label="${DOW[d.getDay()]} ${MON[d.getMonth()]} ${d.getDate()}" aria-pressed="${iso === sel}">${d.getDate()}</button>`;
+  }
+  const fri = addDays(TODAY, (5 - TODAY.getDay() + 7) % 7 || 7);
+  const quick = [['Tomorrow', addDays(TODAY, 1)], ['Friday', fri], ['1 week', addDays(TODAY, 7)], ['2 weeks', addDays(TODAY, 14)]];
+  return `<div class="cal" id="cal">
+    <div class="cal-quick">${quick.map(([l, d]) => `<button type="button" class="opt" data-action="cal-pick" data-val="${isoOf(d)}" aria-pressed="${isoOf(d) === sel}">${l}</button>`).join('')}</div>
+    <div class="cal-head"><button type="button" class="cal-nav" data-action="cal-nav" data-d="-1" aria-label="Previous month" ${minMonth ? 'disabled' : ''}>${svg(CHEV_L)}</button><b>${MONTH[m]} ${y}</b><button type="button" class="cal-nav" data-action="cal-nav" data-d="1" aria-label="Next month">${svg(CHEV_R)}</button></div>
+    <div class="cal-grid">${cells}</div></div>`;
+}
+function dateField() {
+  const d = dateOf(state.form.due), n = daysUntil(d);
+  return `<div class="fgroup"><span class="k">Due</span><button type="button" class="pf-btn" data-action="cal-toggle" aria-expanded="${!!state.calOpen}">${icon('calendar', 18)}<span>${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}</span><span class="pf-sub">${inWords(n)}</span></button>${state.calOpen ? calendarHTML() : ''}</div>`;
+}
+
+sheetHTML = function () {
+  const s = state.sheet;
+  if (s !== 'newtask' && s !== 'neworder') { state.formKind = null; return v2Sheet(); }
+  const f = formFor(s);
+  let head, body, foot;
+  if (s === 'newtask') {
+    head = 'New task';
+    body = textField('title', 'Title', 'e.g. Wire the climber') + (state.formErr ? `<span class="ferr">${state.formErr}</span>` : '')
+      + textField('desc', 'Description', 'What does done look like?', true)
+      + optGroup('Priority', 'prio', [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['critical', 'Critical']])
+      + optGroup('Difficulty', 'diff', Object.keys(PTS_BY_DIFF).map(x => [x, `${x} · ${PTS_BY_DIFF[x]} pts`]))
+      + optGroup('Subteam', 'team', SUBTEAMS.map(x => [x, x]))
+      + dateField()
+      + stepper('cap', 'Spots', 1, 8)
+      + optGroup('Robot', 'robot', [['No robot', 'No robot'], ['PracticeBot', 'PracticeBot']]);
+    foot = `<button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="create-task">Create task</button>`;
+  } else {
+    head = 'New order request';
+    const total = (parseFloat(String(f.price).replace(/[^0-9.]/g, '')) || 0) * f.qty;
+    body = textField('item', 'What do you need?', 'e.g. 10-32 nylock nuts, 100 pack') + (state.formErr ? `<span class="ferr">${state.formErr}</span>` : '')
+      + textField('link', 'Link', 'https://')
+      + optGroup('Vendor', 'vendor', VENDORS.map(v => [v, v]))
+      + stepper('qty', 'Quantity', 1, 99)
+      + textField('price', 'Price each', '$0.00')
+      + textField('why', 'Why do we need it?', 'A mentor sees this when approving', true);
+    foot = `<button type="button" class="btn btn-outline" data-action="close-sheet">Cancel</button><button type="button" class="btn btn-gold" data-action="create-order">Send request${total ? ' · $' + total.toFixed(2) : ''}</button>`;
+  }
+  return `<div class="sheet-wrap"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="${head}"><div class="handle"></div><div class="sh"><h2>${head}</h2><button type="button" class="link" data-action="close-sheet">Close</button></div><div class="sb">${body}</div><div class="sf">${foot}</div></div></div>`;
+};
+
+/* filter sheet: the "Show N tasks" count rolls */
+const v2Sheet2 = sheetHTML;
+sheetHTML = function () {
+  const html = v2Sheet2();
+  return state.sheet === 'filters' ? html.replace(/>Show (\d+) task(s?)</, (m, n, s) => `>Show ${nf('fcount', +n)} task${s}<`) : html;
+};
+
+const rr = () => keepScroll(() => render('0'));
+document.addEventListener('input', (e) => {
+  const k = e.target.dataset && e.target.dataset.f;
+  if (k && state.form) {
+    state.form[k] = e.target.value;
+    if (state.formErr && k === state.formErrKey && e.target.value.trim()) { state.formErr = ''; rr(); }
+    else if (k === 'price') rr();
+  }
+});
+document.addEventListener('submit', (e) => {
+  const fm = e.target.closest('[data-comment]'); if (!fm) return;
+  e.preventDefault();
+  const input = fm.querySelector('input'), txt = input.value.trim(); if (!txt) return;
+  const t = taskById(fm.dataset.comment), who = me();
+  t.comments.push([who.i, who.n, 'just now', txt.replace(/</g, '&lt;')]);
+  input.value = ''; rr();
+});
+/* capture phase + stop: one tap runs exactly one action, even when the patched DOM reuses the button */
+const V5_ACTIONS = new Set(['fset', 'fstep', 'cal-toggle', 'cal-nav', 'cal-pick', 'create-task', 'create-order', 'tstatus']);
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]'); if (!el || !V5_ACTIONS.has(el.dataset.action)) return;
+  e.stopImmediatePropagation();
+  const d = { ...el.dataset };
+  switch (d.action) {
+    case 'fset': state.form[d.key] = d.val; rr(); break;
+    case 'fstep': state.form[d.key] = Math.max(1, (+state.form[d.key] || 1) + +d.d); rr(); break;
+    case 'cal-toggle': state.calOpen = !state.calOpen; if (state.calOpen) { const x = dateOf(state.form.due); state.calMonth = [x.getFullYear(), x.getMonth()]; } rr(); break;
+    case 'cal-nav': { const [y, m] = state.calMonth, x = new Date(y, m + +d.d, 1); state.calMonth = [x.getFullYear(), x.getMonth()]; rr(); break; }
+    case 'cal-pick': state.form.due = d.val; state.calOpen = false; rr(); break;
+    case 'create-task': {
+      const f = state.form;
+      if (!f.title.trim()) { state.formErr = 'Give the task a title.'; state.formErrKey = 'title'; rr(); const i = app.querySelector('#ff-title'); if (i) i.focus(); break; }
+      const due = dateOf(f.due), who = me();
+      TASKS.unshift({ id: 't' + Date.now(), title: f.title.trim().replace(/</g, '&lt;'), pts: PTS_BY_DIFF[f.diff], desc: (f.desc.trim() || 'No description yet.').replace(/</g, '&lt;'), status: 'todo', prio: f.prio, diff: f.diff, team: f.team, robot: f.robot,
+        due: `${MON[due.getMonth()]} ${due.getDate()}`, days: daysUntil(due), people: [], cap: f.cap, by: who.n, checklist: [], files: 0, comments: [], log: [] });
+      state.sheet = null; state.formKind = null; state.tab = 'tasks'; state.sub.tasks = 'board'; state.stack = [];
+      state.toast = 'Task posted to the board'; rr(); break;
+    }
+    case 'create-order': {
+      const f = state.form;
+      if (!f.item.trim()) { state.formErr = 'Say what you need.'; state.formErrKey = 'item'; rr(); break; }
+      ORDERS.unshift({ id: 'o' + Date.now(), name: f.item.trim().replace(/</g, '&lt;'), price: parseFloat(String(f.price).replace(/[^0-9.]/g, '')) || 0, qty: f.qty, vendor: f.vendor, by: 'SR', when: 'just now', step: 0, note: f.why.trim().replace(/</g, '&lt;') });
+      state.sheet = null; state.formKind = null; state.toast = 'Request sent to mentors'; rr(); break;
+    }
+    case 'tstatus': {
+      const t = taskById(d.id), to = d.to, who = me();
+      const mult = t.days >= 7 ? 2 : t.days >= 3 ? 1.5 : t.days >= 1 ? 1.25 : t.days < 0 ? 0.5 : 1;
+      const prev = t.status; t.status = to; t.log = t.log || [];
+      const words = { progress: state.role === 'mentor' ? 'sent it back' : prev === 'todo' ? 'started working on it' : 'moved it to In progress', look: 'asked for a look', review: 'submitted it for review', done: 'approved it' };
+      t.log.unshift([who.n, words[to]]);
+      if (to === 'done') { t.awarded = Math.round(t.pts * mult * 100) / 100; t.people.forEach(i => { if (byI[i]) byI[i].pts += t.awarded; }); state.toast = `Approved · ${t.awarded} pts to ${t.people.length} ${t.people.length === 1 ? 'person' : 'people'}`; }
+      else state.toast = { progress: state.role === 'mentor' ? 'Sent back' : 'Moved to In progress', look: 'A lead will take a look', review: 'Submitted for review' }[to];
+      rr(); break;
+    }
+  }
+}, true);
 
 render();
 </script>
