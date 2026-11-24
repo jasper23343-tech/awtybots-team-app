@@ -548,6 +548,49 @@ main > * { flex-shrink: 0; }
 .art small { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .photo-pick { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px 8px 8px; border-radius: 12px; border: 1px dashed var(--line-2); color: var(--text-2); font-size: 14px; cursor: pointer; }
 .photo-pick .thumb { width: 44px; height: 44px; border-radius: 8px; background: var(--bg-2) center/cover; display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+
+/* ===== v9: bots, pit, rewards, scanner ===== */
+.bot-row.me { background: var(--gold-soft); }
+.bot-rank { width: 24px; flex: none; text-align: center; font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--text-3); }
+.tnum { font-family: var(--mono); color: var(--gold); font-weight: 600; margin-right: 4px; }
+.bot-epa { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.bot-epa b { font-family: var(--mono); font-size: 15px; font-weight: 600; }
+.bot-epa small { font-size: 11px; color: var(--text-3); }
+.bot-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bot-stats > div { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+.bot-stats span { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.bot-stats b { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
+.bot-stats small { font-size: 12px; color: var(--text-2); }
+.card-pad { padding: 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
+.pie-wrap { display: flex; align-items: center; gap: 20px; }
+.pie { width: 132px; height: 132px; flex: none; border-radius: 50%; position: relative; }
+.pie span { position: absolute; inset: 26px; border-radius: 50%; background: var(--card); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pie b { font-size: 22px; font-weight: 600; }
+.pie small { font-size: 11px; color: var(--text-3); }
+.pie-legend { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pie-legend div { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.pie-legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.pie-legend span { flex: 1; color: var(--text-2); }
+.pie-legend b { font-family: var(--mono); font-weight: 600; }
+.mbadge { flex: none; width: 44px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.mbadge.red { background: rgba(255, 99, 99, 0.14); color: #FF8A8A; }
+.mbadge.blue { background: rgba(110, 160, 255, 0.14); color: #8DB4FF; }
+.pit-head { position: relative; display: flex; justify-content: space-between; align-items: flex-end; padding: 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line); }
+.pit-head > div { display: flex; flex-direction: column; gap: 4px; }
+.pit-head .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.pit-head b { font-size: 34px; font-weight: 600; letter-spacing: -0.02em; }
+.pit-head.ready { border-color: var(--green); background: rgba(47, 179, 109, 0.1); }
+.pit-ready { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); font-size: 12px; font-weight: 600; color: var(--green-hi); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
+.opt.bat b { font-family: var(--mono); margin-right: 4px; }
+.opt.bat.old { color: var(--warn); }
+.issue.fixed .ttl { color: var(--text-3); text-decoration: line-through; }
+.reward .rw-n { width: 36px; height: 36px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 600; background: var(--bg-2); color: var(--text-3); }
+.reward.got .rw-n { background: var(--gold); color: var(--gold-ink); }
+.scanner { position: relative; aspect-ratio: 1; border-radius: 20px; overflow: hidden; background: #000; }
+.scanner video { width: 100%; height: 100%; object-fit: cover; }
+.scan-frame { position: absolute; inset: 18%; border-radius: 18px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); border: 2px solid var(--gold); }
+.scan-msg { position: absolute; left: 16px; right: 16px; bottom: 16px; padding: 10px 12px; border-radius: 12px; background: rgba(10, 10, 10, 0.85); font-size: 13px; color: var(--text-2); text-align: center; }
+.a-btn .i { vertical-align: -3px; margin-right: 2px; }
 </style>
 </head>
 <body>
@@ -1988,6 +2031,180 @@ document.addEventListener('click', (e) => {
   if (!f.name.trim()) { state.formErr = 'Name the part.'; state.formErrKey = 'name'; rr(); return; }
   PARTS.unshift({ id: 'u' + Date.now(), name: f.name.trim(), cat: f.cat, sub: f.sub, qty: +f.qty, unit: f.unit, min: +f.min, area: f.area, spot: f.spot.trim() || 'No spot yet', conf: 'perfect', pic: f.pic });
   state.sheet = null; state.formKind = null; state.inv = { cat: 'All', area: null, q: '', low: false }; state.toast = 'Part added'; rr();
+}, true);
+
+/* ===== v9: Bots, Pit, Rewards, QR check-in, deliveries into inventory ===== */
+SUBS.comp = [['scout', 'Scout'], ['bots', 'Bots'], ['pit', 'Pit'], ['data', 'Data'], ['schedule', 'Schedule'], ['rewards', 'Rewards']];
+
+/* ---- Bots: teams at the event (sample data) ---- */
+const ROLE_COLOR = { Shooter: '#E8B53A', Cycler: '#2FB36D', Defense: '#F28B50', Climber: '#7AA7FF', 'Floor intake': '#B58CFF' };
+const B = (num, name, rank, rec, epa, epaRank, drive, roles, matches, note) => ({ num, name, rank, rec, epa, epaRank, drive, roles, matches, note });
+const M = (m, color, us, them, won, pts) => ({ m, color, us, them, won, pts });
+const BOTS = [
+  B(5829, 'Awtybots', 6, '4-1-0', 41.8, 912, 'Swerve · MK4i', { Shooter: 9, Cycler: 6, Climber: 4 }, [M('Q12', 'red', 88, 74, 1, 29), M('Q9', 'blue', 70, 81, 0, 22), M('Q5', 'red', 92, 60, 1, 34)], 'That\'s us.'),
+  B(1310, 'Gearhawks', 1, '5-0-0', 58.2, 64, 'Swerve · X2i', { Shooter: 14, Cycler: 5, Climber: 6 }, [M('Q13', 'blue', 104, 70, 1, 41), M('Q10', 'red', 96, 88, 1, 38), M('Q4', 'blue', 99, 62, 1, 44)], 'Fast full-court shots. Climbs every match.'),
+  B(2468, 'Iron Owls', 2, '5-0-0', 54.9, 118, 'Swerve · MK4n', { Cycler: 12, Shooter: 6, 'Floor intake': 7 }, [M('Q14', 'red', 91, 77, 1, 36), M('Q8', 'blue', 85, 70, 1, 31), M('Q2', 'red', 79, 75, 1, 30)], 'Best floor intake here. Short shots only.'),
+  B(4021, 'Circuit Breakers', 3, '4-1-0', 49.3, 260, 'Swerve · MK4i', { Shooter: 8, Cycler: 8, Climber: 3 }, [M('Q11', 'blue', 77, 80, 0, 28), M('Q7', 'red', 90, 66, 1, 33), M('Q3', 'blue', 83, 71, 1, 31)], 'Consistent. Had a brownout in Q11.'),
+  B(3390, 'Sprocket Science', 4, '4-1-0', 46.0, 402, 'Tank · 6 wheel', { Defense: 11, Cycler: 4 }, [M('Q13', 'red', 70, 104, 0, 12), M('Q9', 'red', 81, 70, 1, 15), M('Q6', 'blue', 74, 69, 1, 14)], 'Heavy bot. Plays defense almost every match.'),
+  B(7712, 'Volt Vultures', 5, '4-1-0', 44.1, 530, 'Swerve · Thrifty', { Shooter: 7, Climber: 7, Cycler: 2 }, [M('Q12', 'blue', 74, 88, 0, 20), M('Q8', 'red', 70, 85, 0, 18), M('Q1', 'blue', 88, 65, 1, 30)], 'Climbs fast. Shooter misses from far.'),
+  B(6140, 'Polar Bots', 7, '3-2-0', 39.5, 1040, 'Swerve · MK4i', { Cycler: 9, 'Floor intake': 5 }, [M('Q14', 'blue', 77, 91, 0, 25), M('Q10', 'blue', 88, 96, 0, 27), M('Q5', 'blue', 60, 92, 0, 19)], 'Good cycler, struggles under defense.'),
+  B(8805, 'Rookie Robotics', 8, '3-2-0', 33.7, 1688, 'Tank · kitbot', { Defense: 6, Cycler: 3 }, [M('Q11', 'red', 80, 77, 1, 11), M('Q7', 'blue', 66, 90, 0, 9), M('Q2', 'blue', 75, 79, 0, 10)], 'Rookie team. Friendly, asked for help with their radio.'),
+  B(1984, 'Big Brother Bots', 9, '2-3-0', 36.2, 1390, 'Swerve · MK4i', { Shooter: 6, Defense: 4 }, [M('Q13', 'blue', 70, 104, 0, 18), M('Q6', 'red', 69, 74, 0, 21), M('Q3', 'red', 71, 83, 0, 20)], 'Switches to defense when behind.'),
+  B(9021, 'Neon Gears', 10, '1-4-0', 28.4, 2105, 'Mecanum', { Cycler: 4, Defense: 2 }, [M('Q10', 'blue', 88, 96, 0, 14), M('Q4', 'red', 62, 99, 0, 9), M('Q1', 'red', 65, 88, 0, 11)], 'Mecanum gets pushed easily.')
+];
+const botByNum = (n) => BOTS.find(b => b.num === +n);
+const topRole = (b) => Object.entries(b.roles).sort((a, c) => c[1] - a[1])[0][0];
+state.botSort = 'rank'; state.botQ = '';
+function botsHTML() {
+  const q = state.botQ.trim().toLowerCase();
+  const list = BOTS.filter(b => !q || `${b.num} ${b.name}`.toLowerCase().includes(q)).sort((a, c) => state.botSort === 'epa' ? c.epa - a.epa : a.rank - c.rank);
+  return `<input class="search" type="search" data-botq value="${escA(state.botQ)}" placeholder="Team number or name" aria-label="Find a team" autocomplete="off">
+    <div class="seg" role="group" aria-label="Sort teams"><button type="button" data-action="bot-sort" data-v="rank" aria-pressed="${state.botSort === 'rank'}">Event rank</button><button type="button" data-action="bot-sort" data-v="epa" aria-pressed="${state.botSort === 'epa'}">Statbotics EPA</button></div>
+    <div class="count-line">${BOTS.length} teams at Week 0 scrimmage · sample data</div>
+    <div class="list" id="bot-list" data-aa>${list.map((b, n) => `<button type="button" class="row bot-row${b.num === 5829 ? ' me' : ''}" id="bot-${b.num}" data-action="open-bot" data-num="${b.num}"><span class="bot-rank">${state.botSort === 'epa' ? n + 1 : b.rank}</span><span class="txt"><span class="ttl"><b class="tnum">${b.num}</b> ${b.name}</span><span class="mt"><i class="tdot" style="background:${ROLE_COLOR[topRole(b)]}"></i>${topRole(b)} · ${b.drive.split(' · ')[0]} · ${b.rec}</span></span><span class="bot-epa"><b>${b.epa.toFixed(1)}</b><small>EPA</small></span></button>`).join('') || '<div class="rowx" id="bot-none"><span class="mt">No team matches.</span></div>'}</div>`;
+}
+function pieHTML(roles) {
+  const total = Object.values(roles).reduce((a, c) => a + c, 0);
+  let acc = 0;
+  const stops = Object.entries(roles).sort((a, c) => c[1] - a[1]).map(([r, v]) => { const a = acc; acc += v / total * 360; return `${ROLE_COLOR[r]} ${a}deg ${acc}deg`; }).join(', ');
+  return `<div class="pie-wrap"><div class="pie" style="background:conic-gradient(${stops})" role="img" aria-label="Scout reports by role"><span><b>${total}</b><small>reports</small></span></div>
+    <div class="pie-legend">${Object.entries(roles).sort((a, c) => c[1] - a[1]).map(([r, v]) => `<div><i style="background:${ROLE_COLOR[r]}"></i><span>${r}</span><b>${Math.round(v / total * 100)}%</b></div>`).join('')}</div></div>`;
+}
+function botPage(b) {
+  return `<div class="pagewrap">${pageBar('Bots', '')}<main>
+    <div class="stack" style="gap:6px"><span class="k" style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)">Team ${b.num}</span><h1 class="dt-title">${b.name}</h1></div>
+    <div class="bot-stats"><div><span>Event rank</span><b>#${b.rank}</b><small>of 40 · ${b.rec}</small></div><div><span>Statbotics EPA</span><b>${b.epa.toFixed(1)}</b><small>#${b.epaRank.toLocaleString()} worldwide</small></div></div>
+    <section class="group"><h2>What scouts report</h2><div class="card-pad">${pieHTML(b.roles)}</div></section>
+    <section class="group"><h2>Robot</h2><div class="facts"><div><span>Drivetrain</span><b>${b.drive}</b></div><div><span>Main job</span><b>${topRole(b)}</b></div></div>${b.note ? `<p class="desc" style="margin:0">${b.note}</p>` : ''}</section>
+    <section class="group"><h2>Last matches</h2><div class="list">${b.matches.map(m => `<div class="rowx"><span class="mbadge ${m.color}">${m.m}</span><span class="txt"><span class="ttl">${m.us} – ${m.them} <span style="color:${m.won ? 'var(--green-hi)' : 'var(--warn)'};font-weight:600">${m.won ? 'Won' : 'Lost'}</span></span><span class="mt">${m.color === 'red' ? 'Red' : 'Blue'} alliance</span></span><span class="bot-epa"><b>${m.pts}</b><small>their pts</small></span></div>`).join('')}</div></section>
+    <p class="count-line" style="margin:0">EPA and world rank come from Statbotics. Event rank comes from FRC Events.</p>
+  </main></div>`;
+}
+
+/* ---- Pit: pre-match checklist, issue log, battery ---- */
+const PIT_CHECKS = ['Battery in, strap tight', 'Bumpers on, right color', 'Radio light solid green', 'Swerve modules zeroed', 'Intake moves freely', 'No loose wires or zip tie ends', 'Code deployed, version matches', 'Driver station connected'];
+state.pit = { match: 14, done: {}, battery: 'B07', issues: [{ id: 1, text: 'Left climber hook bent slightly', sev: 'watch', open: true, by: 'LP', when: 'Q12' }, { id: 2, text: 'CAN light blinking on intake motor', sev: 'fix', open: true, by: 'SR', when: 'Q9' }, { id: 3, text: 'Bumper fabric tearing at corner', sev: 'watch', open: false, by: 'DR', when: 'Q5' }] };
+function pitHTML() {
+  const p = state.pit, n = PIT_CHECKS.filter((_, k) => p.done[k]).length, ready = n === PIT_CHECKS.length;
+  const bats = BATTERIES.filter(b => b[1] !== 'Retired');
+  const open = p.issues.filter(x => x.open), fixed = p.issues.filter(x => !x.open);
+  return `<section class="pit-head${ready ? ' ready' : ''}"><div><span class="k">Next match</span><b>Q${p.match}</b></div><div style="text-align:right"><span class="k">Checklist</span><b>${nf('pit-n', n)}/${PIT_CHECKS.length}</b></div>${ready ? '<span class="pit-ready">Ready to queue</span>' : ''}</section>
+    <section class="group"><h2>Before Q${p.match}</h2><div class="list">${PIT_CHECKS.map((c, k) => `<button type="button" class="check" role="checkbox" aria-checked="${!!p.done[k]}" data-action="pit-check" data-n="${k}"><span class="box">${p.done[k] ? icon('check', 14) : ''}</span><span class="cl">${c}</span></button>`).join('')}</div>
+      <button type="button" class="btn ${ready ? 'btn-green' : 'btn-outline'}" data-action="pit-next" ${ready ? '' : 'disabled'}>${ready ? `Played Q${p.match} · start next checklist` : 'Finish the checklist first'}</button></section>
+    <section class="group"><h2>Battery for Q${p.match}</h2><div class="chips">${bats.map(b => `<button type="button" class="opt bat${b[4] > 100 ? ' old' : ''}" data-action="pit-bat" data-id="${b[0]}" aria-pressed="${p.battery === b[0]}"><b>${b[0]}</b> ${b[3]} · ${b[4]} cycles</button>`).join('')}</div>
+      ${(() => { const b = BATTERIES.find(x => x[0] === p.battery); return b && (b[4] > 100 || b[1] !== 'Ready') ? `<span class="ferr">${b[0]} is ${b[1] !== 'Ready' ? b[1].toLowerCase() : 'past 100 cycles'}. Pick another if you can.</span>` : ''; })()}</section>
+    <section class="group"><h2>Issues · ${open.length} open</h2>
+      <form class="composer" data-issue><input class="search" name="t" placeholder="Something broke or looks off?" aria-label="Log an issue" autocomplete="off"><button type="submit" class="iconbtn" style="background:var(--gold);color:var(--gold-ink);border:none" aria-label="Log issue">${icon('plus', 18)}</button></form>
+      <div class="list" id="pit-issues" data-aa>${[...open, ...fixed].map(x => `<div class="rowx issue${x.open ? '' : ' fixed'}" id="iss-${x.id}"><span class="dot ${x.open ? (x.sev === 'fix' ? 't-warn' : 't-gold') : 't-green'}"></span><span class="txt"><span class="ttl">${x.text}</span><span class="mt">${byI[x.by] ? byI[x.by].n.split(' ')[0] : ''} · since ${x.when}${x.open ? '' : ' · fixed'}</span></span>${x.open ? `<button type="button" class="btn btn-sm btn-outline" data-action="pit-fix" data-id="${x.id}">Fixed</button>` : ''}</div>`).join('')}</div></section>`;
+}
+
+/* ---- Rewards for scouting ---- */
+state.scouted = 23;
+const REWARDS = [[5, 'Scout sticker', 'Hand-out at the next meeting'], [15, 'Pick the pit playlist', 'For one event day'], [25, 'Free snack run', 'At the next event'], [40, 'Scout of the event', 'Shout-out at the team meeting'], [60, 'Team hoodie', 'Your size, on the next order']];
+const SCOUTS = [['KT', 41], ['SR', 23], ['PS', 19], ['NK', 17], ['AJ', 9]];
+function rewardsHTML() {
+  const s = state.scouted, next = REWARDS.find(r => r[0] > s), prev = [...REWARDS].reverse().find(r => r[0] <= s);
+  const from = prev ? prev[0] : 0, pct = next ? Math.round((s - from) / (next[0] - from) * 100) : 100;
+  const board = SCOUTS.map(([i, n]) => [i, i === 'SR' ? s : n]).sort((a, c) => c[1] - a[1]);
+  return `<section class="hero green"><span class="k gold">Matches you scouted</span><div class="baseline"><span class="big">${nf('rw-n', s)}</span><span style="font-size:14px;color:var(--text-2)">${next ? `${next[0] - s} more for <b style="color:var(--text)">${next[1]}</b>` : 'Every reward unlocked'}</span></div><div class="bar"><i style="width:${pct}%"></i></div></section>
+    <section class="group"><h2>Rewards</h2><div class="list">${REWARDS.map(([n, t, d]) => { const got = s >= n; return `<div class="rowx reward${got ? ' got' : ''}"><span class="rw-n">${n}</span><span class="txt"><span class="ttl">${t}</span><span class="mt">${d}</span></span>${got ? '<span class="badge t-green">Unlocked</span>' : `<span class="mt" style="font-family:var(--mono)">${n - s} to go</span>`}</div>`; }).join('')}</div>
+      <span class="mt" style="color:var(--text-3)">Mentors set the rewards. A match only counts once it syncs.</span></section>
+    <section class="group"><h2>Top scouts</h2><div class="list" id="scout-board" data-aa>${board.map(([i, n], k) => `<div class="rowx" id="sb-${i}"><span class="bot-rank">${k + 1}</span>${avatar(i, 'lg')}<span class="txt"><span class="ttl">${byI[i].n}</span></span><span class="bot-epa"><b>${n}</b><small>matches</small></span></div>`).join('')}</div></section>`;
+}
+
+const v8Comp = compHTML;
+compHTML = function () {
+  const sub = state.sub.comp;
+  if (sub === 'bots') return botsHTML();
+  if (sub === 'pit') return pitHTML();
+  if (sub === 'rewards') return rewardsHTML();
+  let h = v8Comp();
+  if (sub === 'scout') h = h.replace(/<button type="button" class="btn btn-gold">Start match scout/, '<button type="button" class="btn btn-gold" data-action="scout-demo">Start match scout').replace('23 saved on this phone', `${state.scouted} saved on this phone`);
+  return h;
+};
+const v8Page = profilePage;
+profilePage = function () { const top = state.stack[state.stack.length - 1]; return top && top.type === 'bot' ? botPage(botByNum(top.num)) : v8Page(); };
+
+/* ---- Orders: move through steps; Received adds the parts to inventory ---- */
+const v8Order = orderCard;
+orderCard = function (o, i) {
+  let h = v8Order(o, i);
+  const nextStep = { 1: ['Mark placed', 2], 2: ['Mark shipped', 3], 3: ['Mark received', 4] }[o.step];
+  const canMove = nextStep && (state.role === 'mentor' || o.step === 3);
+  let extra = '';
+  if (canMove) extra = `<button type="button" class="btn btn-sm ${o.step === 3 ? 'btn-green' : 'btn-outline'}" data-action="order-step" data-id="${o.id}">${nextStep[0]}${o.step === 3 ? ' · adds to inventory' : ''}</button>`;
+  if (o.step === 4 && o.part) extra = `<button type="button" class="link" style="align-self:flex-start" data-action="open-part" data-id="${o.part}">In inventory · ${esc(areaById(partById(o.part).area).name)} →</button>`;
+  return extra ? h.replace(/<\/div>\s*$/, extra + '</div>') : h;
+};
+
+/* ---- QR check-in ---- */
+let scanStream = null, scanTimer = null;
+function stopScan() { if (scanStream) scanStream.getTracks().forEach(t => t.stop()); scanStream = null; clearInterval(scanTimer); scanTimer = null; }
+async function startScan() {
+  const v = app.querySelector('#scan-video'); if (!v || scanStream) return;
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    if (state.sheet !== 'scan') return stopScan();
+    v.srcObject = scanStream; await v.play();
+    if ('BarcodeDetector' in window) {
+      const det = new BarcodeDetector({ formats: ['qr_code'] });
+      scanTimer = setInterval(async () => { try { const r = await det.detect(v); if (r.length) doCheckIn('scan'); } catch (e) {} }, 300);
+    } else { state.scanMsg = 'This browser can\'t read QR codes yet. The app version can.'; rr(); }
+  } catch (e) { state.scanMsg = 'No camera here. On a phone this opens the back camera.'; rr(); }
+}
+function doCheckIn(how) {
+  stopScan(); state.sheet = null; state.checkedIn = true;
+  state.toast = how === 'scan' ? 'Checked in at 3:34 PM · scanned the shop QR' : 'Checked in at 3:34 PM · a lead will confirm'; rr();
+}
+const v8Sheet = sheetHTML;
+sheetHTML = function () {
+  if (state.sheet !== 'scan') { if (scanStream) stopScan(); return v8Sheet(); }
+  return `<div class="sheet-wrap"><button type="button" class="scrim" data-action="close-sheet" aria-label="Close"></button>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Scan to check in"><div class="handle"></div><div class="sh"><h2>Scan to check in</h2><button type="button" class="link" data-action="close-sheet">Close</button></div>
+    <div class="sb"><div class="scanner"><video id="scan-video" playsinline muted></video><span class="scan-frame"></span>${state.scanMsg ? `<span class="scan-msg">${state.scanMsg}</span>` : ''}</div>
+      <p class="count-line" style="margin:0;text-align:center">Point your camera at the QR code by the shop door.</p></div>
+    <div class="sf"><button type="button" class="btn btn-outline" data-action="checkin-manual">Check in without scanning</button>${state.scanMsg ? '<button type="button" class="btn btn-gold" data-action="checkin-sim">Pretend I scanned it</button>' : ''}</div></div></div>`;
+};
+const v8Home = homeHTML;
+homeHTML = function () { return v8Home().replace(/class="a-btn" data-action="check">Check in →/, `class="a-btn" data-action="sheet" data-sheet="scan">${icon('scan', 16)} Scan to check in`); };
+const v8Render = render;
+render = function (anim) { v8Render(anim); if (state.sheet === 'scan') { if (!scanStream && !state.scanTried) { state.scanTried = true; startScan(); } } else { state.scanTried = false; state.scanMsg = ''; if (scanStream) stopScan(); } };
+
+document.addEventListener('input', (e) => { if (e.target.matches('[data-botq]')) { state.botQ = e.target.value; rr(); } });
+document.addEventListener('submit', (e) => {
+  const fm = e.target.closest('[data-issue]'); if (!fm) return;
+  e.preventDefault();
+  const t = fm.querySelector('input').value.trim(); if (!t) return;
+  state.pit.issues.unshift({ id: Date.now(), text: esc(t), sev: 'fix', open: true, by: me().i, when: 'Q' + state.pit.match });
+  fm.querySelector('input').value = ''; rr();
+});
+const V9 = ['bot-sort', 'open-bot', 'pit-check', 'pit-next', 'pit-bat', 'pit-fix', 'scout-demo', 'order-step', 'checkin-manual', 'checkin-sim'];
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]'); if (!el || !V9.includes(el.dataset.action)) return;
+  e.stopImmediatePropagation();
+  const d = { ...el.dataset }, p = state.pit;
+  switch (d.action) {
+    case 'bot-sort': state.botSort = d.v; rr(); break;
+    case 'open-bot': state.stack.push({ type: 'bot', num: d.num }); render('page'); scrollTop(); break;
+    case 'pit-check': p.done[d.n] = !p.done[d.n]; rr(); break;
+    case 'pit-next': { const b = BATTERIES.find(x => x[0] === p.battery); if (b) b[4] += 1; state.toast = `Q${p.match} logged · ${p.battery} now at ${b ? b[4] : '?'} cycles`; p.match += 1; p.done = {}; rr(); break; }
+    case 'pit-bat': p.battery = d.id; rr(); break;
+    case 'pit-fix': { const x = p.issues.find(i => i.id === +d.id); x.open = false; rr(); break; }
+    case 'scout-demo': state.scouted += 1; { const r = REWARDS.find(x => x[0] === state.scouted); state.toast = r ? `Unlocked: ${r[1]}` : `Match saved · ${state.scouted} scouted`; } rr(); break;
+    case 'order-step': {
+      const o = ORDERS.find(x => x.id === d.id); o.step += 1;
+      if (o.step === 4) {
+        const plain = o.name.replace(/&lt;/g, '<').toLowerCase();
+        let part = PARTS.find(x => x.name.toLowerCase() === plain || plain.includes(x.name.toLowerCase()));
+        if (part) part.qty += o.qty;
+        else { part = { id: 'u' + Date.now(), name: o.name.replace(/&lt;/g, '<'), cat: 'Supplies', sub: CAT_SUBS.Supplies[0], qty: o.qty, unit: 'pcs', min: 0, area: 'cabinet', spot: 'New arrivals shelf · needs a home', conf: 'perfect' }; PARTS.unshift(part); }
+        o.part = part.id; state.toast = `Received · ${o.qty} added to ${part.name}`;
+      } else state.toast = ORDER_STEPS[o.step];
+      rr(); break;
+    }
+    case 'checkin-manual': doCheckIn('manual'); break;
+    case 'checkin-sim': doCheckIn('scan'); break;
+  }
 }, true);
 
 render();
